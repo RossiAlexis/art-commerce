@@ -1,0 +1,9 @@
+{
+  "short_name": "Art by Vero",
+  "name": "Art by Vero Miller",
+  "icons": [],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#ebc9a8",
+  "background_color": "#ebc9a8"
+}

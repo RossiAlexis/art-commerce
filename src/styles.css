@@ -1,0 +1,102 @@
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300..800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Shadows+Into+Light&display=swap');
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@theme inline {
+  --font-sans: 'Open Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: 'Playfair Display', ui-serif, Georgia, serif;
+  --font-display: 'Shadows Into Light', cursive;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+}
+
+:root {
+  --radius: 0.5rem;
+  --background: oklch(0.91 0.055 66);
+  --foreground: oklch(0.19 0.015 65);
+  --card: oklch(0.97 0.025 70);
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+  --primary: oklch(0.48 0.105 118);
+  --primary-foreground: oklch(0.98 0.01 90);
+  --secondary: oklch(0.84 0.07 65);
+  --secondary-foreground: var(--foreground);
+  --muted: oklch(0.88 0.025 70);
+  --muted-foreground: oklch(0.46 0.02 65);
+  --accent: oklch(0.86 0.055 72);
+  --accent-foreground: var(--foreground);
+  --destructive: oklch(0.58 0.22 25);
+  --border: oklch(0.3 0.015 65);
+  --input: oklch(0.8 0.03 70);
+  --ring: var(--primary);
+}
+
+* {
+  box-sizing: border-box;
+  border-color: var(--border);
+}
+
+html,
+body,
+#app {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  text-rendering: optimizeLegibility;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nav-link {
+  position: relative;
+  color: var(--foreground);
+  text-decoration: none;
+}
+
+.nav-link::after {
+  position: absolute;
+  right: 50%;
+  bottom: -0.4rem;
+  left: 50%;
+  height: 2px;
+  background: #688329;
+  content: '';
+  transition:
+    right 180ms ease,
+    left 180ms ease;
+}
+
+.nav-link:hover::after,
+.nav-link:focus-visible::after,
+.nav-link[aria-current='page']::after {
+  right: 0;
+  left: 0;
+}
