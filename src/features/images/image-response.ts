@@ -4,6 +4,12 @@ type ImagePayload = {
   bytes: Uint8Array
 }
 
+type StoredImage = {
+  id: string
+  contentType: string
+  blob: Uint8Array
+}
+
 const allowedImageTypes = new Set(['image/jpeg', 'image/png', 'image/webp'])
 
 export function createImageResponse({ id, contentType, bytes }: ImagePayload) {
@@ -20,5 +26,21 @@ export function createImageResponse({ id, contentType, bytes }: ImagePayload) {
       'Content-Length': String(bytes.byteLength),
       'Content-Type': contentType,
     },
+  })
+}
+
+export async function serveStoredImage(
+  loadImage: () => Promise<StoredImage | null>,
+) {
+  const image = await loadImage()
+
+  if (!image) {
+    return new Response('Not found', { status: 404 })
+  }
+
+  return createImageResponse({
+    id: image.id,
+    contentType: image.contentType,
+    bytes: image.blob,
   })
 }

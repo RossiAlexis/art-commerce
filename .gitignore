@@ -15,3 +15,7 @@ src/generated/prisma
 test-results
 playwright-report
 coverage
+
+# This project uses npm; ignore stray pnpm artifacts from CLI tooling
+pnpm-lock.yaml
+pnpm-workspace.yaml

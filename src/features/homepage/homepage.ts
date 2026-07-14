@@ -31,7 +31,6 @@ export async function loadHomepage(repository: HomepageRepository) {
     homepage,
     paintings: paintings
       .filter(({ images }) => images.length > 0)
-      .slice()
       .sort((left, right) => {
         const createdAtDifference =
           left.createdAt.getTime() - right.createdAt.getTime()
