@@ -12,15 +12,16 @@ import {
   REQUIRED_MODELS,
   assessProductionCompatibility,
 } from '../src/features/cutover/cutover'
-import type { CompatibilitySnapshot } from '../src/features/cutover/cutover'
+import type {
+  CheckStatus,
+  CompatibilitySnapshot,
+  RequiredModel,
+} from '../src/features/cutover/cutover'
 
 const prisma = getPrisma()
 
 /** Maps each required model to its Prisma client accessor for a count probe. */
-const MODEL_COUNTERS: Record<
-  (typeof REQUIRED_MODELS)[number],
-  () => Promise<number>
-> = {
+const MODEL_COUNTERS: Record<RequiredModel, () => Promise<number>> = {
   User: () => prisma.user.count(),
   Password: () => prisma.password.count(),
   Role: () => prisma.role.count(),
@@ -33,7 +34,7 @@ const MODEL_COUNTERS: Record<
   UserImage: () => prisma.userImage.count(),
 }
 
-async function tableExists(model: (typeof REQUIRED_MODELS)[number]) {
+async function tableExists(model: RequiredModel) {
   try {
     await MODEL_COUNTERS[model]()
     return true
@@ -76,7 +77,7 @@ async function readSnapshot(): Promise<CompatibilitySnapshot> {
   }
 }
 
-const ICON: Record<'pass' | 'warn' | 'fail', string> = {
+const ICON: Record<CheckStatus, string> = {
   pass: '✓',
   warn: '!',
   fail: '✗',
