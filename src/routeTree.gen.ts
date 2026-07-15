@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LogoutRouteImport } from './routes/logout'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ContactMeRouteImport } from './routes/contact-me'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PaintingsIndexRouteImport } from './routes/paintings.index'
 import { Route as AdministrationIndexRouteImport } from './routes/administration.index'
@@ -32,6 +33,11 @@ const LogoutRoute = LogoutRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactMeRoute = ContactMeRouteImport.update({
+  id: '/contact-me',
+  path: '/contact-me',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -104,6 +110,7 @@ const AdministrationUsernameCategoriesCategoryIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/contact-me': typeof ContactMeRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/administration/$username': typeof AdministrationUsernameRouteWithChildren
@@ -120,6 +127,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/contact-me': typeof ContactMeRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/paintings/$id': typeof PaintingsIdRoute
@@ -136,6 +144,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/contact-me': typeof ContactMeRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/administration/$username': typeof AdministrationUsernameRouteWithChildren
@@ -154,6 +163,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/contact-me'
     | '/login'
     | '/logout'
     | '/administration/$username'
@@ -170,6 +180,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/contact-me'
     | '/login'
     | '/logout'
     | '/paintings/$id'
@@ -185,6 +196,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/contact-me'
     | '/login'
     | '/logout'
     | '/administration/$username'
@@ -202,6 +214,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ContactMeRoute: typeof ContactMeRoute
   LoginRoute: typeof LoginRoute
   LogoutRoute: typeof LogoutRoute
   AdministrationUsernameRoute: typeof AdministrationUsernameRouteWithChildren
@@ -226,6 +239,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact-me': {
+      id: '/contact-me'
+      path: '/contact-me'
+      fullPath: '/contact-me'
+      preLoaderRoute: typeof ContactMeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -342,6 +362,7 @@ const AdministrationUsernameRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ContactMeRoute: ContactMeRoute,
   LoginRoute: LoginRoute,
   LogoutRoute: LogoutRoute,
   AdministrationUsernameRoute: AdministrationUsernameRouteWithChildren,
