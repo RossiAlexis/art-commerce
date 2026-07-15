@@ -198,7 +198,16 @@ const paintingIdInput = usernameInput.extend({ paintingId: z.string().min(1) })
 const imageIdInput = usernameInput.extend({ imageId: z.string().min(1) })
 const fieldsInput = usernameInput.merge(paintingFieldsSchema)
 
-function formGuardFields(data: FormData) {
+/** Reject a non-multipart body before an image upload handler runs. */
+function expectFormData(data: unknown): FormData {
+  if (!(data instanceof FormData)) {
+    throw new Error('Expected multipart form data for the image upload.')
+  }
+  return data
+}
+
+/** The username field a multipart image request carries for the guard. */
+function formUsername(data: FormData) {
   return String(data.get('username') ?? '')
 }
 
@@ -263,14 +272,9 @@ async function readImagePayload(data: FormData) {
 
 /** Guarded add of a single image (one file per request). */
 export const addPaintingImageFn = createServerFn({ method: 'POST' })
-  .validator((data: unknown) => {
-    if (!(data instanceof FormData)) {
-      throw new Error('Expected multipart form data for the image upload.')
-    }
-    return data
-  })
+  .validator(expectFormData)
   .handler(async ({ data }) => {
-    const user = await guard(formGuardFields(data))
+    const user = await guard(formUsername(data))
     const paintingId = String(data.get('paintingId') ?? '')
     const payload = await readImagePayload(data)
     if (!payload) {
@@ -284,14 +288,9 @@ export const addPaintingImageFn = createServerFn({ method: 'POST' })
 
 /** Guarded replace of an existing image (one file per request). */
 export const replacePaintingImageFn = createServerFn({ method: 'POST' })
-  .validator((data: unknown) => {
-    if (!(data instanceof FormData)) {
-      throw new Error('Expected multipart form data for the image upload.')
-    }
-    return data
-  })
+  .validator(expectFormData)
   .handler(async ({ data }) => {
-    const user = await guard(formGuardFields(data))
+    const user = await guard(formUsername(data))
     const imageId = String(data.get('imageId') ?? '')
     const payload = await readImagePayload(data)
     if (!payload) {
