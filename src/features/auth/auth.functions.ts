@@ -43,12 +43,6 @@ export const logInFn = createServerFn({ method: 'POST' })
     }
   })
 
-/** Server function that invalidates the Session and destroys the cookie. */
-export const logOutFn = createServerFn({ method: 'POST' }).handler(async () => {
-  const { logOut } = await import('./auth.session')
-  await logOut()
-})
-
 /** Server function invoked from `beforeLoad` to enforce the Administration guard. */
 export const requireAdministratorFn = createServerFn({ method: 'GET' })
   .validator((input: { returnTo: string; requestedUsername?: string }) => input)
