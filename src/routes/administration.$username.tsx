@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { Outlet, createFileRoute } from '@tanstack/react-router'
 
 import { requireAdministratorFn } from '#/features/auth/auth.functions'
 
@@ -14,16 +14,21 @@ export const Route = createFileRoute('/administration/$username')({
   head: () => ({
     meta: [{ title: 'Art by Vero Miller - Administration' }],
   }),
-  component: AdministrationHome,
+  component: AdministrationLayout,
 })
 
-function AdministrationHome() {
+function AdministrationLayout() {
   const { username } = Route.useLoaderData()
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-16">
+    <div className="mx-auto max-w-3xl px-6 py-16">
       <div className="flex items-center justify-between">
-        <h1 className="font-serif text-3xl text-stone-900">Administration</h1>
+        <a
+          href={`/administration/${username}`}
+          className="font-serif text-lg text-stone-700"
+        >
+          Administration
+        </a>
         <form method="post" action="/logout">
           <button
             type="submit"
@@ -34,10 +39,9 @@ function AdministrationHome() {
         </form>
       </div>
 
-      <p className="mt-4 text-stone-600">
-        Signed in as <span className="font-medium">{username}</span>. Paintings,
-        Categories, and Homepage management will appear here.
-      </p>
-    </main>
+      <div className="mt-10">
+        <Outlet />
+      </div>
+    </div>
   )
 }
