@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PaintingsIndexRouteImport } from './routes/paintings.index'
 import { Route as ResourcesNoteImagesImageIdRouteImport } from './routes/resources.note-images.$imageId'
 import { Route as ResourcesHomepageImageImageIdRouteImport } from './routes/resources.homepage-image.$imageId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaintingsIndexRoute = PaintingsIndexRouteImport.update({
+  id: '/paintings/',
+  path: '/paintings/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResourcesNoteImagesImageIdRoute =
@@ -33,17 +39,20 @@ const ResourcesHomepageImageImageIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/paintings/': typeof PaintingsIndexRoute
   '/resources/homepage-image/$imageId': typeof ResourcesHomepageImageImageIdRoute
   '/resources/note-images/$imageId': typeof ResourcesNoteImagesImageIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/paintings': typeof PaintingsIndexRoute
   '/resources/homepage-image/$imageId': typeof ResourcesHomepageImageImageIdRoute
   '/resources/note-images/$imageId': typeof ResourcesNoteImagesImageIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/paintings/': typeof PaintingsIndexRoute
   '/resources/homepage-image/$imageId': typeof ResourcesHomepageImageImageIdRoute
   '/resources/note-images/$imageId': typeof ResourcesNoteImagesImageIdRoute
 }
@@ -51,22 +60,26 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/paintings/'
     | '/resources/homepage-image/$imageId'
     | '/resources/note-images/$imageId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/paintings'
     | '/resources/homepage-image/$imageId'
     | '/resources/note-images/$imageId'
   id:
     | '__root__'
     | '/'
+    | '/paintings/'
     | '/resources/homepage-image/$imageId'
     | '/resources/note-images/$imageId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  PaintingsIndexRoute: typeof PaintingsIndexRoute
   ResourcesHomepageImageImageIdRoute: typeof ResourcesHomepageImageImageIdRoute
   ResourcesNoteImagesImageIdRoute: typeof ResourcesNoteImagesImageIdRoute
 }
@@ -78,6 +91,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/paintings/': {
+      id: '/paintings/'
+      path: '/paintings'
+      fullPath: '/paintings/'
+      preLoaderRoute: typeof PaintingsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/resources/note-images/$imageId': {
@@ -99,6 +119,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  PaintingsIndexRoute: PaintingsIndexRoute,
   ResourcesHomepageImageImageIdRoute: ResourcesHomepageImageImageIdRoute,
   ResourcesNoteImagesImageIdRoute: ResourcesNoteImagesImageIdRoute,
 }
