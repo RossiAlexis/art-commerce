@@ -28,10 +28,21 @@ function AdministrationHome() {
             and Painting filters.
           </p>
         </li>
+        <li>
+          <a
+            href={`/administration/${username}/homepage`}
+            className="text-stone-900 underline"
+          >
+            Edit Homepage
+          </a>
+          <p className="text-sm text-stone-600">
+            Update the Homepage hero image, headline, and introduction.
+          </p>
+        </li>
       </ul>
 
       <p className="mt-8 text-sm text-stone-500">
-        Painting and Homepage management will appear here.
+        Painting management will appear here.
       </p>
     </section>
   )

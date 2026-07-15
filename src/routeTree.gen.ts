@@ -19,6 +19,7 @@ import { Route as AdministrationUsernameRouteImport } from './routes/administrat
 import { Route as AdministrationUsernameIndexRouteImport } from './routes/administration.$username.index'
 import { Route as ResourcesNoteImagesImageIdRouteImport } from './routes/resources.note-images.$imageId'
 import { Route as ResourcesHomepageImageImageIdRouteImport } from './routes/resources.homepage-image.$imageId'
+import { Route as AdministrationUsernameHomepageRouteImport } from './routes/administration.$username.homepage'
 import { Route as AdministrationUsernameCategoriesIndexRouteImport } from './routes/administration.$username.categories.index'
 import { Route as AdministrationUsernameCategoriesNewRouteImport } from './routes/administration.$username.categories.new'
 import { Route as AdministrationUsernameCategoriesCategoryIdRouteImport } from './routes/administration.$username.categories.$categoryId'
@@ -76,6 +77,12 @@ const ResourcesHomepageImageImageIdRoute =
     path: '/resources/homepage-image/$imageId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AdministrationUsernameHomepageRoute =
+  AdministrationUsernameHomepageRouteImport.update({
+    id: '/homepage',
+    path: '/homepage',
+    getParentRoute: () => AdministrationUsernameRoute,
+  } as any)
 const AdministrationUsernameCategoriesIndexRoute =
   AdministrationUsernameCategoriesIndexRouteImport.update({
     id: '/categories/',
@@ -103,6 +110,7 @@ export interface FileRoutesByFullPath {
   '/paintings/$id': typeof PaintingsIdRoute
   '/administration/': typeof AdministrationIndexRoute
   '/paintings/': typeof PaintingsIndexRoute
+  '/administration/$username/homepage': typeof AdministrationUsernameHomepageRoute
   '/resources/homepage-image/$imageId': typeof ResourcesHomepageImageImageIdRoute
   '/resources/note-images/$imageId': typeof ResourcesNoteImagesImageIdRoute
   '/administration/$username/': typeof AdministrationUsernameIndexRoute
@@ -117,6 +125,7 @@ export interface FileRoutesByTo {
   '/paintings/$id': typeof PaintingsIdRoute
   '/administration': typeof AdministrationIndexRoute
   '/paintings': typeof PaintingsIndexRoute
+  '/administration/$username/homepage': typeof AdministrationUsernameHomepageRoute
   '/resources/homepage-image/$imageId': typeof ResourcesHomepageImageImageIdRoute
   '/resources/note-images/$imageId': typeof ResourcesNoteImagesImageIdRoute
   '/administration/$username': typeof AdministrationUsernameIndexRoute
@@ -133,6 +142,7 @@ export interface FileRoutesById {
   '/paintings/$id': typeof PaintingsIdRoute
   '/administration/': typeof AdministrationIndexRoute
   '/paintings/': typeof PaintingsIndexRoute
+  '/administration/$username/homepage': typeof AdministrationUsernameHomepageRoute
   '/resources/homepage-image/$imageId': typeof ResourcesHomepageImageImageIdRoute
   '/resources/note-images/$imageId': typeof ResourcesNoteImagesImageIdRoute
   '/administration/$username/': typeof AdministrationUsernameIndexRoute
@@ -150,6 +160,7 @@ export interface FileRouteTypes {
     | '/paintings/$id'
     | '/administration/'
     | '/paintings/'
+    | '/administration/$username/homepage'
     | '/resources/homepage-image/$imageId'
     | '/resources/note-images/$imageId'
     | '/administration/$username/'
@@ -164,6 +175,7 @@ export interface FileRouteTypes {
     | '/paintings/$id'
     | '/administration'
     | '/paintings'
+    | '/administration/$username/homepage'
     | '/resources/homepage-image/$imageId'
     | '/resources/note-images/$imageId'
     | '/administration/$username'
@@ -179,6 +191,7 @@ export interface FileRouteTypes {
     | '/paintings/$id'
     | '/administration/'
     | '/paintings/'
+    | '/administration/$username/homepage'
     | '/resources/homepage-image/$imageId'
     | '/resources/note-images/$imageId'
     | '/administration/$username/'
@@ -271,6 +284,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResourcesHomepageImageImageIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/administration/$username/homepage': {
+      id: '/administration/$username/homepage'
+      path: '/homepage'
+      fullPath: '/administration/$username/homepage'
+      preLoaderRoute: typeof AdministrationUsernameHomepageRouteImport
+      parentRoute: typeof AdministrationUsernameRoute
+    }
     '/administration/$username/categories/': {
       id: '/administration/$username/categories/'
       path: '/categories'
@@ -296,6 +316,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdministrationUsernameRouteChildren {
+  AdministrationUsernameHomepageRoute: typeof AdministrationUsernameHomepageRoute
   AdministrationUsernameIndexRoute: typeof AdministrationUsernameIndexRoute
   AdministrationUsernameCategoriesCategoryIdRoute: typeof AdministrationUsernameCategoriesCategoryIdRoute
   AdministrationUsernameCategoriesNewRoute: typeof AdministrationUsernameCategoriesNewRoute
@@ -304,6 +325,7 @@ interface AdministrationUsernameRouteChildren {
 
 const AdministrationUsernameRouteChildren: AdministrationUsernameRouteChildren =
   {
+    AdministrationUsernameHomepageRoute: AdministrationUsernameHomepageRoute,
     AdministrationUsernameIndexRoute: AdministrationUsernameIndexRoute,
     AdministrationUsernameCategoriesCategoryIdRoute:
       AdministrationUsernameCategoriesCategoryIdRoute,
@@ -332,3 +354,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
