@@ -23,9 +23,11 @@ import { Route as ResourcesHomepageImageImageIdRouteImport } from './routes/reso
 import { Route as AdministrationUsernameHomepageRouteImport } from './routes/administration.$username.homepage'
 import { Route as AdministrationUsernamePaintingsIndexRouteImport } from './routes/administration.$username.paintings.index'
 import { Route as AdministrationUsernameCategoriesIndexRouteImport } from './routes/administration.$username.categories.index'
+import { Route as AdministrationUsernamePaintingsNewRouteImport } from './routes/administration.$username.paintings.new'
 import { Route as AdministrationUsernamePaintingsPaintingIdRouteImport } from './routes/administration.$username.paintings.$paintingId'
 import { Route as AdministrationUsernameCategoriesNewRouteImport } from './routes/administration.$username.categories.new'
 import { Route as AdministrationUsernameCategoriesCategoryIdRouteImport } from './routes/administration.$username.categories.$categoryId'
+import { Route as AdministrationUsernamePaintingsPaintingIdEditRouteImport } from './routes/administration.$username.paintings.$paintingId.edit'
 
 const LogoutRoute = LogoutRouteImport.update({
   id: '/logout',
@@ -103,6 +105,12 @@ const AdministrationUsernameCategoriesIndexRoute =
     path: '/categories/',
     getParentRoute: () => AdministrationUsernameRoute,
   } as any)
+const AdministrationUsernamePaintingsNewRoute =
+  AdministrationUsernamePaintingsNewRouteImport.update({
+    id: '/paintings/new',
+    path: '/paintings/new',
+    getParentRoute: () => AdministrationUsernameRoute,
+  } as any)
 const AdministrationUsernamePaintingsPaintingIdRoute =
   AdministrationUsernamePaintingsPaintingIdRouteImport.update({
     id: '/paintings/$paintingId',
@@ -121,6 +129,12 @@ const AdministrationUsernameCategoriesCategoryIdRoute =
     path: '/categories/$categoryId',
     getParentRoute: () => AdministrationUsernameRoute,
   } as any)
+const AdministrationUsernamePaintingsPaintingIdEditRoute =
+  AdministrationUsernamePaintingsPaintingIdEditRouteImport.update({
+    id: '/edit',
+    path: '/edit',
+    getParentRoute: () => AdministrationUsernamePaintingsPaintingIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -137,9 +151,11 @@ export interface FileRoutesByFullPath {
   '/administration/$username/': typeof AdministrationUsernameIndexRoute
   '/administration/$username/categories/$categoryId': typeof AdministrationUsernameCategoriesCategoryIdRoute
   '/administration/$username/categories/new': typeof AdministrationUsernameCategoriesNewRoute
-  '/administration/$username/paintings/$paintingId': typeof AdministrationUsernamePaintingsPaintingIdRoute
+  '/administration/$username/paintings/$paintingId': typeof AdministrationUsernamePaintingsPaintingIdRouteWithChildren
+  '/administration/$username/paintings/new': typeof AdministrationUsernamePaintingsNewRoute
   '/administration/$username/categories/': typeof AdministrationUsernameCategoriesIndexRoute
   '/administration/$username/paintings/': typeof AdministrationUsernamePaintingsIndexRoute
+  '/administration/$username/paintings/$paintingId/edit': typeof AdministrationUsernamePaintingsPaintingIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -155,9 +171,11 @@ export interface FileRoutesByTo {
   '/administration/$username': typeof AdministrationUsernameIndexRoute
   '/administration/$username/categories/$categoryId': typeof AdministrationUsernameCategoriesCategoryIdRoute
   '/administration/$username/categories/new': typeof AdministrationUsernameCategoriesNewRoute
-  '/administration/$username/paintings/$paintingId': typeof AdministrationUsernamePaintingsPaintingIdRoute
+  '/administration/$username/paintings/$paintingId': typeof AdministrationUsernamePaintingsPaintingIdRouteWithChildren
+  '/administration/$username/paintings/new': typeof AdministrationUsernamePaintingsNewRoute
   '/administration/$username/categories': typeof AdministrationUsernameCategoriesIndexRoute
   '/administration/$username/paintings': typeof AdministrationUsernamePaintingsIndexRoute
+  '/administration/$username/paintings/$paintingId/edit': typeof AdministrationUsernamePaintingsPaintingIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -175,9 +193,11 @@ export interface FileRoutesById {
   '/administration/$username/': typeof AdministrationUsernameIndexRoute
   '/administration/$username/categories/$categoryId': typeof AdministrationUsernameCategoriesCategoryIdRoute
   '/administration/$username/categories/new': typeof AdministrationUsernameCategoriesNewRoute
-  '/administration/$username/paintings/$paintingId': typeof AdministrationUsernamePaintingsPaintingIdRoute
+  '/administration/$username/paintings/$paintingId': typeof AdministrationUsernamePaintingsPaintingIdRouteWithChildren
+  '/administration/$username/paintings/new': typeof AdministrationUsernamePaintingsNewRoute
   '/administration/$username/categories/': typeof AdministrationUsernameCategoriesIndexRoute
   '/administration/$username/paintings/': typeof AdministrationUsernamePaintingsIndexRoute
+  '/administration/$username/paintings/$paintingId/edit': typeof AdministrationUsernamePaintingsPaintingIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -197,8 +217,10 @@ export interface FileRouteTypes {
     | '/administration/$username/categories/$categoryId'
     | '/administration/$username/categories/new'
     | '/administration/$username/paintings/$paintingId'
+    | '/administration/$username/paintings/new'
     | '/administration/$username/categories/'
     | '/administration/$username/paintings/'
+    | '/administration/$username/paintings/$paintingId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -215,8 +237,10 @@ export interface FileRouteTypes {
     | '/administration/$username/categories/$categoryId'
     | '/administration/$username/categories/new'
     | '/administration/$username/paintings/$paintingId'
+    | '/administration/$username/paintings/new'
     | '/administration/$username/categories'
     | '/administration/$username/paintings'
+    | '/administration/$username/paintings/$paintingId/edit'
   id:
     | '__root__'
     | '/'
@@ -234,8 +258,10 @@ export interface FileRouteTypes {
     | '/administration/$username/categories/$categoryId'
     | '/administration/$username/categories/new'
     | '/administration/$username/paintings/$paintingId'
+    | '/administration/$username/paintings/new'
     | '/administration/$username/categories/'
     | '/administration/$username/paintings/'
+    | '/administration/$username/paintings/$paintingId/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -351,6 +377,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdministrationUsernameCategoriesIndexRouteImport
       parentRoute: typeof AdministrationUsernameRoute
     }
+    '/administration/$username/paintings/new': {
+      id: '/administration/$username/paintings/new'
+      path: '/paintings/new'
+      fullPath: '/administration/$username/paintings/new'
+      preLoaderRoute: typeof AdministrationUsernamePaintingsNewRouteImport
+      parentRoute: typeof AdministrationUsernameRoute
+    }
     '/administration/$username/paintings/$paintingId': {
       id: '/administration/$username/paintings/$paintingId'
       path: '/paintings/$paintingId'
@@ -372,15 +405,38 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdministrationUsernameCategoriesCategoryIdRouteImport
       parentRoute: typeof AdministrationUsernameRoute
     }
+    '/administration/$username/paintings/$paintingId/edit': {
+      id: '/administration/$username/paintings/$paintingId/edit'
+      path: '/edit'
+      fullPath: '/administration/$username/paintings/$paintingId/edit'
+      preLoaderRoute: typeof AdministrationUsernamePaintingsPaintingIdEditRouteImport
+      parentRoute: typeof AdministrationUsernamePaintingsPaintingIdRoute
+    }
   }
 }
+
+interface AdministrationUsernamePaintingsPaintingIdRouteChildren {
+  AdministrationUsernamePaintingsPaintingIdEditRoute: typeof AdministrationUsernamePaintingsPaintingIdEditRoute
+}
+
+const AdministrationUsernamePaintingsPaintingIdRouteChildren: AdministrationUsernamePaintingsPaintingIdRouteChildren =
+  {
+    AdministrationUsernamePaintingsPaintingIdEditRoute:
+      AdministrationUsernamePaintingsPaintingIdEditRoute,
+  }
+
+const AdministrationUsernamePaintingsPaintingIdRouteWithChildren =
+  AdministrationUsernamePaintingsPaintingIdRoute._addFileChildren(
+    AdministrationUsernamePaintingsPaintingIdRouteChildren,
+  )
 
 interface AdministrationUsernameRouteChildren {
   AdministrationUsernameHomepageRoute: typeof AdministrationUsernameHomepageRoute
   AdministrationUsernameIndexRoute: typeof AdministrationUsernameIndexRoute
   AdministrationUsernameCategoriesCategoryIdRoute: typeof AdministrationUsernameCategoriesCategoryIdRoute
   AdministrationUsernameCategoriesNewRoute: typeof AdministrationUsernameCategoriesNewRoute
-  AdministrationUsernamePaintingsPaintingIdRoute: typeof AdministrationUsernamePaintingsPaintingIdRoute
+  AdministrationUsernamePaintingsPaintingIdRoute: typeof AdministrationUsernamePaintingsPaintingIdRouteWithChildren
+  AdministrationUsernamePaintingsNewRoute: typeof AdministrationUsernamePaintingsNewRoute
   AdministrationUsernameCategoriesIndexRoute: typeof AdministrationUsernameCategoriesIndexRoute
   AdministrationUsernamePaintingsIndexRoute: typeof AdministrationUsernamePaintingsIndexRoute
 }
@@ -394,7 +450,9 @@ const AdministrationUsernameRouteChildren: AdministrationUsernameRouteChildren =
     AdministrationUsernameCategoriesNewRoute:
       AdministrationUsernameCategoriesNewRoute,
     AdministrationUsernamePaintingsPaintingIdRoute:
-      AdministrationUsernamePaintingsPaintingIdRoute,
+      AdministrationUsernamePaintingsPaintingIdRouteWithChildren,
+    AdministrationUsernamePaintingsNewRoute:
+      AdministrationUsernamePaintingsNewRoute,
     AdministrationUsernameCategoriesIndexRoute:
       AdministrationUsernameCategoriesIndexRoute,
     AdministrationUsernamePaintingsIndexRoute:
