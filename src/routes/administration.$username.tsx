@@ -1,6 +1,7 @@
 import { Outlet, createFileRoute } from '@tanstack/react-router'
 
 import { requireAdministratorFn } from '#/features/auth/auth.functions'
+import { noindexMeta } from '#/features/seo/seo'
 
 export const Route = createFileRoute('/administration/$username')({
   beforeLoad: async ({ location, params }) => {
@@ -12,7 +13,7 @@ export const Route = createFileRoute('/administration/$username')({
   },
   loader: ({ context }) => ({ username: context.user.username }),
   head: () => ({
-    meta: [{ title: 'Art by Vero Miller - Administration' }],
+    meta: [{ title: 'Art by Vero Miller - Administration' }, ...noindexMeta()],
   }),
   component: AdministrationLayout,
 })

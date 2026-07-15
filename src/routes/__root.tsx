@@ -39,8 +39,56 @@ export const Route = createRootRoute({
       },
     ],
   }),
+  notFoundComponent: NotFound,
+  errorComponent: ErrorBoundary,
   shellComponent: RootDocument,
 })
+
+function NotFound() {
+  return (
+    <main className="mx-auto flex min-h-screen max-w-xl flex-col justify-center px-6 py-16 text-center">
+      <p className="font-display text-6xl text-[#526a27]">404</p>
+      <h1 className="mt-4 font-serif text-3xl text-stone-900">
+        This page could not be found
+      </h1>
+      <p className="mt-3 text-stone-600">
+        The painting or page you are looking for is not available. It may have
+        been moved or is no longer part of the portfolio.
+      </p>
+      <p className="mt-8">
+        <Link
+          to="/"
+          className="rounded bg-stone-900 px-4 py-2 text-sm text-white"
+        >
+          Return to the Homepage
+        </Link>
+      </p>
+    </main>
+  )
+}
+
+function ErrorBoundary() {
+  // Never surface the underlying error: no message, stack trace, or secrets
+  // reach the visitor. Route/server failures show this safe boundary only.
+  return (
+    <main className="mx-auto flex min-h-screen max-w-xl flex-col justify-center px-6 py-16 text-center">
+      <h1 className="font-serif text-3xl text-stone-900">
+        Something went wrong
+      </h1>
+      <p className="mt-3 text-stone-600">
+        We could not load this page right now. Please try again in a moment.
+      </p>
+      <p className="mt-8">
+        <Link
+          to="/"
+          className="rounded bg-stone-900 px-4 py-2 text-sm text-white"
+        >
+          Return to the Homepage
+        </Link>
+      </p>
+    </main>
+  )
+}
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (

@@ -9,6 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as LogoutRouteImport } from './routes/logout'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ContactMeRouteImport } from './routes/contact-me'
@@ -27,6 +29,16 @@ import { Route as AdministrationUsernamePaintingsPaintingIdRouteImport } from '.
 import { Route as AdministrationUsernameCategoriesNewRouteImport } from './routes/administration.$username.categories.new'
 import { Route as AdministrationUsernameCategoriesCategoryIdRouteImport } from './routes/administration.$username.categories.$categoryId'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
+  id: '/robots.txt',
+  path: '/robots.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LogoutRoute = LogoutRouteImport.update({
   id: '/logout',
   path: '/logout',
@@ -127,6 +139,8 @@ export interface FileRoutesByFullPath {
   '/contact-me': typeof ContactMeRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/administration/$username': typeof AdministrationUsernameRouteWithChildren
   '/paintings/$id': typeof PaintingsIdRoute
   '/administration/': typeof AdministrationIndexRoute
@@ -146,6 +160,8 @@ export interface FileRoutesByTo {
   '/contact-me': typeof ContactMeRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/paintings/$id': typeof PaintingsIdRoute
   '/administration': typeof AdministrationIndexRoute
   '/paintings': typeof PaintingsIndexRoute
@@ -165,6 +181,8 @@ export interface FileRoutesById {
   '/contact-me': typeof ContactMeRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/administration/$username': typeof AdministrationUsernameRouteWithChildren
   '/paintings/$id': typeof PaintingsIdRoute
   '/administration/': typeof AdministrationIndexRoute
@@ -186,6 +204,8 @@ export interface FileRouteTypes {
     | '/contact-me'
     | '/login'
     | '/logout'
+    | '/robots.txt'
+    | '/sitemap.xml'
     | '/administration/$username'
     | '/paintings/$id'
     | '/administration/'
@@ -205,6 +225,8 @@ export interface FileRouteTypes {
     | '/contact-me'
     | '/login'
     | '/logout'
+    | '/robots.txt'
+    | '/sitemap.xml'
     | '/paintings/$id'
     | '/administration'
     | '/paintings'
@@ -223,6 +245,8 @@ export interface FileRouteTypes {
     | '/contact-me'
     | '/login'
     | '/logout'
+    | '/robots.txt'
+    | '/sitemap.xml'
     | '/administration/$username'
     | '/paintings/$id'
     | '/administration/'
@@ -243,6 +267,8 @@ export interface RootRouteChildren {
   ContactMeRoute: typeof ContactMeRoute
   LoginRoute: typeof LoginRoute
   LogoutRoute: typeof LogoutRoute
+  RobotsDottxtRoute: typeof RobotsDottxtRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   AdministrationUsernameRoute: typeof AdministrationUsernameRouteWithChildren
   PaintingsIdRoute: typeof PaintingsIdRoute
   AdministrationIndexRoute: typeof AdministrationIndexRoute
@@ -253,6 +279,20 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/robots.txt': {
+      id: '/robots.txt'
+      path: '/robots.txt'
+      fullPath: '/robots.txt'
+      preLoaderRoute: typeof RobotsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/logout': {
       id: '/logout'
       path: '/logout'
@@ -411,6 +451,8 @@ const rootRouteChildren: RootRouteChildren = {
   ContactMeRoute: ContactMeRoute,
   LoginRoute: LoginRoute,
   LogoutRoute: LogoutRoute,
+  RobotsDottxtRoute: RobotsDottxtRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   AdministrationUsernameRoute: AdministrationUsernameRouteWithChildren,
   PaintingsIdRoute: PaintingsIdRoute,
   AdministrationIndexRoute: AdministrationIndexRoute,

@@ -4,13 +4,14 @@ import { z } from 'zod'
 
 import { safeRedirect } from '#/features/auth/auth'
 import { DEFAULT_LOGIN_REDIRECT, logInFn } from '#/features/auth/auth.functions'
+import { noindexMeta } from '#/features/seo/seo'
 
 export const Route = createFileRoute('/login')({
   validateSearch: z.object({
     redirectTo: z.string().optional(),
   }),
   head: () => ({
-    meta: [{ title: 'Art by Vero Miller - Sign in' }],
+    meta: [{ title: 'Art by Vero Miller - Sign in' }, ...noindexMeta()],
   }),
   component: LoginPage,
 })
