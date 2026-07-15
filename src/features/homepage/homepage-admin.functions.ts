@@ -118,10 +118,15 @@ export const getAdminHomepageFn = createServerFn({ method: 'GET' })
     return loadAdminHomepage(prismaHomepageAdminRepository)
   })
 
-const contentInput = homepageContentSchema.extend({
+// Every guarded server fn carries the return target and requested username so
+// requireAdministrator can enforce the ownership invariant. Shared here so the
+// three JSON-bodied mutations validate the guard fields identically.
+const guardInput = z.object({
   returnTo: z.string(),
   requestedUsername: z.string(),
 })
+
+const contentInput = homepageContentSchema.merge(guardInput)
 
 /** Guarded update of the Homepage title and text (shared validation). */
 export const saveHomepageContentFn = createServerFn({ method: 'POST' })
@@ -167,11 +172,7 @@ export const saveHomepageImageFn = createServerFn({ method: 'POST' })
     })
   })
 
-const describeInput = z.object({
-  altText: z.string(),
-  returnTo: z.string(),
-  requestedUsername: z.string(),
-})
+const describeInput = guardInput.extend({ altText: z.string() })
 
 /** Guarded update of the existing Homepage image alt text. */
 export const describeHomepageImageFn = createServerFn({ method: 'POST' })
@@ -183,14 +184,9 @@ export const describeHomepageImageFn = createServerFn({ method: 'POST' })
     })
   })
 
-const removeImageInput = z.object({
-  returnTo: z.string(),
-  requestedUsername: z.string(),
-})
-
 /** Guarded removal of the optional Homepage image. */
 export const removeHomepageImageFn = createServerFn({ method: 'POST' })
-  .validator(removeImageInput)
+  .validator(guardInput)
   .handler(async ({ data }) => {
     await guard(data)
     return removeHomepageImage(prismaHomepageAdminRepository)
