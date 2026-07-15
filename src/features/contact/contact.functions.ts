@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { getPrisma } from '#/server/db'
 
 import {
+  DELIVERY_FAILED_ERROR,
   parseContactEnv,
   resolvePaintingContext,
   submitContactMessage,
@@ -16,14 +17,13 @@ import type {
 } from './contact'
 
 const prismaContactPaintingRepository: ContactPaintingRepository = {
-  async findPaintingSummary(id) {
+  findPaintingSummary(id) {
     // Only publicly visible Paintings (those with at least one image) can be
     // inquired about, matching the public detail-route visibility rule.
-    const painting = await getPrisma().painting.findFirst({
+    return getPrisma().painting.findFirst({
       where: { id, images: { some: {} } },
       select: { id: true, title: true },
     })
-    return painting
   },
 }
 
@@ -80,8 +80,7 @@ export const submitContactFn = createServerFn({ method: 'POST' })
       console.error('Contact delivery is not configured; submission rejected.')
       return {
         status: 'delivery-failed',
-        error:
-          'Your message could not be sent right now. Please try again shortly.',
+        error: DELIVERY_FAILED_ERROR,
         values: toContactValues(data),
       }
     }

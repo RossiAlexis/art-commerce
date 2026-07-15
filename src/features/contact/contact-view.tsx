@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
-import { contactMessageSchema } from './contact'
+import { contactMessageSchema, firstIssue } from './contact'
 import type { PaintingContextResult } from './contact'
 
 export type ContactStatus =
@@ -47,10 +47,7 @@ export function ContactView({
       paintingId: form.get('paintingId'),
     })
     if (!parsed.success) {
-      setFieldError(
-        parsed.error.issues[0]?.message ??
-          'Please correct the highlighted fields.',
-      )
+      setFieldError(firstIssue(parsed.error))
       return
     }
 

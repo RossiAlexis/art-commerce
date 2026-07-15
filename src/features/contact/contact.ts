@@ -112,7 +112,7 @@ export type ContactSubmissionResult =
   | { status: 'invalid'; error: string; values: ContactValues }
   | { status: 'delivery-failed'; error: string; values: ContactValues }
 
-const DELIVERY_FAILED_ERROR =
+export const DELIVERY_FAILED_ERROR =
   'Your message could not be sent right now. Please try again shortly.'
 
 export function toContactValues(raw: Record<string, unknown>): ContactValues {
@@ -247,7 +247,7 @@ function renderVisitorAutoReply(
   }
 }
 
-function firstIssue(error: z.ZodError): string {
+export function firstIssue(error: z.ZodError): string {
   return error.issues[0]?.message ?? 'Please correct the highlighted fields.'
 }
 
