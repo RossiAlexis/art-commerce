@@ -16,9 +16,18 @@ export function PaintingListView({
 
   return (
     <section>
-      <h1 className="font-serif text-3xl text-stone-900">Paintings</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="font-serif text-3xl text-stone-900">Paintings</h1>
+        <a
+          href={`${base}/new`}
+          className="rounded bg-stone-900 px-3 py-1.5 text-sm text-white"
+        >
+          New painting
+        </a>
+      </div>
       <p className="mt-2 text-sm text-stone-600">
-        Inspect a Painting and its images, or delete one from the portfolio.
+        Create a Painting, inspect one and its images, or delete a work from the
+        portfolio.
       </p>
 
       {paintings.length > 0 ? (
@@ -73,9 +82,15 @@ export function PaintingDetailView({
         Back to Paintings
       </a>
 
-      <h1 className="mt-4 font-serif text-3xl text-stone-900">
-        {painting.title}
-      </h1>
+      <div className="mt-4 flex items-center justify-between gap-4">
+        <h1 className="font-serif text-3xl text-stone-900">{painting.title}</h1>
+        <a
+          href={`/administration/${username}/paintings/${painting.id}/edit`}
+          className="shrink-0 rounded bg-stone-900 px-3 py-1.5 text-sm text-white"
+        >
+          Edit painting
+        </a>
+      </div>
 
       <dl className="mt-6 space-y-3 text-sm">
         <div>
