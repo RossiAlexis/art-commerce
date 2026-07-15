@@ -18,6 +18,18 @@ function AdministrationHome() {
       <ul className="mt-8 space-y-3">
         <li>
           <a
+            href={`/administration/${username}/paintings`}
+            className="text-stone-900 underline"
+          >
+            Manage Paintings
+          </a>
+          <p className="text-sm text-stone-600">
+            Inspect Paintings and their images, and delete works from the
+            portfolio.
+          </p>
+        </li>
+        <li>
+          <a
             href={`/administration/${username}/categories`}
             className="text-stone-900 underline"
           >
@@ -40,10 +52,6 @@ function AdministrationHome() {
           </p>
         </li>
       </ul>
-
-      <p className="mt-8 text-sm text-stone-500">
-        Painting management will appear here.
-      </p>
     </section>
   )
 }
