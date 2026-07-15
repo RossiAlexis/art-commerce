@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PaintingsIndexRouteImport } from './routes/paintings.index'
 import { Route as AdministrationIndexRouteImport } from './routes/administration.index'
+import { Route as PaintingsIdRouteImport } from './routes/paintings.$id'
 import { Route as AdministrationUsernameRouteImport } from './routes/administration.$username'
 import { Route as ResourcesNoteImagesImageIdRouteImport } from './routes/resources.note-images.$imageId'
 import { Route as ResourcesHomepageImageImageIdRouteImport } from './routes/resources.homepage-image.$imageId'
@@ -43,6 +44,11 @@ const AdministrationIndexRoute = AdministrationIndexRouteImport.update({
   path: '/administration/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PaintingsIdRoute = PaintingsIdRouteImport.update({
+  id: '/paintings/$id',
+  path: '/paintings/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdministrationUsernameRoute = AdministrationUsernameRouteImport.update({
   id: '/administration/$username',
   path: '/administration/$username',
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/administration/$username': typeof AdministrationUsernameRoute
+  '/paintings/$id': typeof PaintingsIdRoute
   '/administration/': typeof AdministrationIndexRoute
   '/paintings/': typeof PaintingsIndexRoute
   '/resources/homepage-image/$imageId': typeof ResourcesHomepageImageImageIdRoute
@@ -76,6 +83,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/administration/$username': typeof AdministrationUsernameRoute
+  '/paintings/$id': typeof PaintingsIdRoute
   '/administration': typeof AdministrationIndexRoute
   '/paintings': typeof PaintingsIndexRoute
   '/resources/homepage-image/$imageId': typeof ResourcesHomepageImageImageIdRoute
@@ -87,6 +95,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/administration/$username': typeof AdministrationUsernameRoute
+  '/paintings/$id': typeof PaintingsIdRoute
   '/administration/': typeof AdministrationIndexRoute
   '/paintings/': typeof PaintingsIndexRoute
   '/resources/homepage-image/$imageId': typeof ResourcesHomepageImageImageIdRoute
@@ -99,6 +108,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/logout'
     | '/administration/$username'
+    | '/paintings/$id'
     | '/administration/'
     | '/paintings/'
     | '/resources/homepage-image/$imageId'
@@ -109,6 +119,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/logout'
     | '/administration/$username'
+    | '/paintings/$id'
     | '/administration'
     | '/paintings'
     | '/resources/homepage-image/$imageId'
@@ -119,6 +130,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/logout'
     | '/administration/$username'
+    | '/paintings/$id'
     | '/administration/'
     | '/paintings/'
     | '/resources/homepage-image/$imageId'
@@ -130,6 +142,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   LogoutRoute: typeof LogoutRoute
   AdministrationUsernameRoute: typeof AdministrationUsernameRoute
+  PaintingsIdRoute: typeof PaintingsIdRoute
   AdministrationIndexRoute: typeof AdministrationIndexRoute
   PaintingsIndexRoute: typeof PaintingsIndexRoute
   ResourcesHomepageImageImageIdRoute: typeof ResourcesHomepageImageImageIdRoute
@@ -173,6 +186,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdministrationIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/paintings/$id': {
+      id: '/paintings/$id'
+      path: '/paintings/$id'
+      fullPath: '/paintings/$id'
+      preLoaderRoute: typeof PaintingsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/administration/$username': {
       id: '/administration/$username'
       path: '/administration/$username'
@@ -202,6 +222,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   LogoutRoute: LogoutRoute,
   AdministrationUsernameRoute: AdministrationUsernameRoute,
+  PaintingsIdRoute: PaintingsIdRoute,
   AdministrationIndexRoute: AdministrationIndexRoute,
   PaintingsIndexRoute: PaintingsIndexRoute,
   ResourcesHomepageImageImageIdRoute: ResourcesHomepageImageImageIdRoute,
@@ -210,3 +231,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
