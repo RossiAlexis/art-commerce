@@ -38,6 +38,15 @@ function AdministrationHome() {
         Signed in as <span className="font-medium">{username}</span>. Paintings,
         Categories, and Homepage management will appear here.
       </p>
+
+      <nav className="mt-8">
+        <a
+          href={`/administration/${username}/homepage`}
+          className="inline-block rounded border border-stone-400 px-4 py-2 text-sm text-stone-800 hover:bg-stone-50"
+        >
+          Edit Homepage
+        </a>
+      </nav>
     </main>
   )
 }
