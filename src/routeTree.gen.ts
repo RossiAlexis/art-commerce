@@ -9,11 +9,25 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as LogoutRouteImport } from './routes/logout'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PaintingsIndexRouteImport } from './routes/paintings.index'
+import { Route as AdministrationIndexRouteImport } from './routes/administration.index'
+import { Route as AdministrationUsernameRouteImport } from './routes/administration.$username'
 import { Route as ResourcesNoteImagesImageIdRouteImport } from './routes/resources.note-images.$imageId'
 import { Route as ResourcesHomepageImageImageIdRouteImport } from './routes/resources.homepage-image.$imageId'
 
+const LogoutRoute = LogoutRouteImport.update({
+  id: '/logout',
+  path: '/logout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -22,6 +36,16 @@ const IndexRoute = IndexRouteImport.update({
 const PaintingsIndexRoute = PaintingsIndexRouteImport.update({
   id: '/paintings/',
   path: '/paintings/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdministrationIndexRoute = AdministrationIndexRouteImport.update({
+  id: '/administration/',
+  path: '/administration/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdministrationUsernameRoute = AdministrationUsernameRouteImport.update({
+  id: '/administration/$username',
+  path: '/administration/$username',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResourcesNoteImagesImageIdRoute =
@@ -39,12 +63,20 @@ const ResourcesHomepageImageImageIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/logout': typeof LogoutRoute
+  '/administration/$username': typeof AdministrationUsernameRoute
+  '/administration/': typeof AdministrationIndexRoute
   '/paintings/': typeof PaintingsIndexRoute
   '/resources/homepage-image/$imageId': typeof ResourcesHomepageImageImageIdRoute
   '/resources/note-images/$imageId': typeof ResourcesNoteImagesImageIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/logout': typeof LogoutRoute
+  '/administration/$username': typeof AdministrationUsernameRoute
+  '/administration': typeof AdministrationIndexRoute
   '/paintings': typeof PaintingsIndexRoute
   '/resources/homepage-image/$imageId': typeof ResourcesHomepageImageImageIdRoute
   '/resources/note-images/$imageId': typeof ResourcesNoteImagesImageIdRoute
@@ -52,6 +84,10 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/logout': typeof LogoutRoute
+  '/administration/$username': typeof AdministrationUsernameRoute
+  '/administration/': typeof AdministrationIndexRoute
   '/paintings/': typeof PaintingsIndexRoute
   '/resources/homepage-image/$imageId': typeof ResourcesHomepageImageImageIdRoute
   '/resources/note-images/$imageId': typeof ResourcesNoteImagesImageIdRoute
@@ -60,18 +96,30 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/login'
+    | '/logout'
+    | '/administration/$username'
+    | '/administration/'
     | '/paintings/'
     | '/resources/homepage-image/$imageId'
     | '/resources/note-images/$imageId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/login'
+    | '/logout'
+    | '/administration/$username'
+    | '/administration'
     | '/paintings'
     | '/resources/homepage-image/$imageId'
     | '/resources/note-images/$imageId'
   id:
     | '__root__'
     | '/'
+    | '/login'
+    | '/logout'
+    | '/administration/$username'
+    | '/administration/'
     | '/paintings/'
     | '/resources/homepage-image/$imageId'
     | '/resources/note-images/$imageId'
@@ -79,6 +127,10 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  LoginRoute: typeof LoginRoute
+  LogoutRoute: typeof LogoutRoute
+  AdministrationUsernameRoute: typeof AdministrationUsernameRoute
+  AdministrationIndexRoute: typeof AdministrationIndexRoute
   PaintingsIndexRoute: typeof PaintingsIndexRoute
   ResourcesHomepageImageImageIdRoute: typeof ResourcesHomepageImageImageIdRoute
   ResourcesNoteImagesImageIdRoute: typeof ResourcesNoteImagesImageIdRoute
@@ -86,6 +138,20 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/logout': {
+      id: '/logout'
+      path: '/logout'
+      fullPath: '/logout'
+      preLoaderRoute: typeof LogoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -98,6 +164,20 @@ declare module '@tanstack/react-router' {
       path: '/paintings'
       fullPath: '/paintings/'
       preLoaderRoute: typeof PaintingsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/administration/': {
+      id: '/administration/'
+      path: '/administration'
+      fullPath: '/administration/'
+      preLoaderRoute: typeof AdministrationIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/administration/$username': {
+      id: '/administration/$username'
+      path: '/administration/$username'
+      fullPath: '/administration/$username'
+      preLoaderRoute: typeof AdministrationUsernameRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/resources/note-images/$imageId': {
@@ -119,6 +199,10 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LoginRoute: LoginRoute,
+  LogoutRoute: LogoutRoute,
+  AdministrationUsernameRoute: AdministrationUsernameRoute,
+  AdministrationIndexRoute: AdministrationIndexRoute,
   PaintingsIndexRoute: PaintingsIndexRoute,
   ResourcesHomepageImageImageIdRoute: ResourcesHomepageImageImageIdRoute,
   ResourcesNoteImagesImageIdRoute: ResourcesNoteImagesImageIdRoute,
@@ -126,12 +210,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
