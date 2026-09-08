@@ -13,6 +13,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as LogoutRouteImport } from './routes/logout'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as DesignSystemRouteImport } from './routes/design-system'
 import { Route as ContactMeRouteImport } from './routes/contact-me'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PaintingsIndexRouteImport } from './routes/paintings.index'
@@ -49,6 +50,11 @@ const LogoutRoute = LogoutRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DesignSystemRoute = DesignSystemRouteImport.update({
+  id: '/design-system',
+  path: '/design-system',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactMeRoute = ContactMeRouteImport.update({
@@ -151,6 +157,7 @@ const AdministrationUsernamePaintingsPaintingIdEditRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/contact-me': typeof ContactMeRoute
+  '/design-system': typeof DesignSystemRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/robots.txt': typeof RobotsDottxtRoute
@@ -174,6 +181,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/contact-me': typeof ContactMeRoute
+  '/design-system': typeof DesignSystemRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/robots.txt': typeof RobotsDottxtRoute
@@ -197,6 +205,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/contact-me': typeof ContactMeRoute
+  '/design-system': typeof DesignSystemRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/robots.txt': typeof RobotsDottxtRoute
@@ -222,6 +231,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/contact-me'
+    | '/design-system'
     | '/login'
     | '/logout'
     | '/robots.txt'
@@ -245,6 +255,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/contact-me'
+    | '/design-system'
     | '/login'
     | '/logout'
     | '/robots.txt'
@@ -267,6 +278,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/contact-me'
+    | '/design-system'
     | '/login'
     | '/logout'
     | '/robots.txt'
@@ -291,6 +303,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ContactMeRoute: typeof ContactMeRoute
+  DesignSystemRoute: typeof DesignSystemRoute
   LoginRoute: typeof LoginRoute
   LogoutRoute: typeof LogoutRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
@@ -331,6 +344,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/design-system': {
+      id: '/design-system'
+      path: '/design-system'
+      fullPath: '/design-system'
+      preLoaderRoute: typeof DesignSystemRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contact-me': {
@@ -507,6 +527,7 @@ const AdministrationUsernameRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ContactMeRoute: ContactMeRoute,
+  DesignSystemRoute: DesignSystemRoute,
   LoginRoute: LoginRoute,
   LogoutRoute: LogoutRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,

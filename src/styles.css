@@ -2,6 +2,8 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
+@custom-variant dark (&:is(.dark *));
+
 @theme inline {
   --font-sans: 'Open Sans', ui-sans-serif, system-ui, sans-serif;
   --font-serif: 'Playfair Display', ui-serif, Georgia, serif;
@@ -14,6 +16,7 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -31,24 +34,58 @@
 
 :root {
   --radius: 0.5rem;
-  --background: oklch(0.91 0.055 66);
-  --foreground: oklch(0.19 0.015 65);
-  --card: oklch(0.97 0.025 70);
+  /* Base #FDF9F4 */
+  --background: oklch(0.984 0.0079 73.7);
+  /* Text #1C1917 */
+  --foreground: oklch(0.216 0.0061 56);
+  /* Surface #F0EBE3 */
+  --card: oklch(0.942 0.012 79.8);
   --card-foreground: var(--foreground);
   --popover: var(--card);
   --popover-foreground: var(--foreground);
-  --primary: oklch(0.48 0.105 118);
-  --primary-foreground: oklch(0.98 0.01 90);
-  --secondary: oklch(0.84 0.07 65);
+  /* Terracota #C27A5A */
+  --primary: oklch(0.649 0.101 44.5);
+  --primary-foreground: oklch(1 0 0);
+  /* Terracota oscuro #993F17 */
+  --primary-hover: oklch(0.484 0.131 41.7);
+  /* Surface #F0EBE3, reused */
+  --secondary: oklch(0.942 0.012 79.8);
   --secondary-foreground: var(--foreground);
-  --muted: oklch(0.88 0.025 70);
-  --muted-foreground: oklch(0.46 0.02 65);
-  --accent: oklch(0.86 0.055 72);
-  --accent-foreground: var(--foreground);
+  /* Surface #F0EBE3, reused */
+  --muted: oklch(0.942 0.012 79.8);
+  /* Mid #7C756F */
+  --muted-foreground: oklch(0.567 0.0126 63.2);
+  /* Terracota claro #FCEBE3 */
+  --accent: oklch(0.951 0.0215 47);
+  --accent-foreground: oklch(0.218 0 0);
   --destructive: oklch(0.58 0.22 25);
-  --border: oklch(0.3 0.015 65);
-  --input: oklch(0.8 0.03 70);
-  --ring: var(--primary);
+  /* Border #E2D8CE */
+  --border: oklch(0.887 0.0175 67.6);
+  --input: var(--border);
+  /* Terracota oscuro #993F17, matches --primary-hover */
+  --ring: var(--primary-hover);
+}
+
+.dark {
+  --background: oklch(0.17 0.01 55);
+  --foreground: oklch(0.95 0.01 75);
+  --card: oklch(0.225 0.012 55);
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+  --primary: oklch(0.56 0.13 43);
+  --primary-foreground: oklch(1 0 0);
+  --primary-hover: oklch(0.645 0.135 44);
+  --secondary: oklch(0.225 0.012 55);
+  --secondary-foreground: var(--foreground);
+  --muted: oklch(0.225 0.012 55);
+  --muted-foreground: oklch(0.68 0.018 60);
+  --accent: oklch(0.3 0.035 42);
+  --accent-foreground: oklch(0.95 0.01 75);
+  --destructive: oklch(0.65 0.19 25);
+  --border: oklch(0.335 0.016 55);
+  --input: var(--border);
+  --ring: var(--primary-hover);
 }
 
 * {

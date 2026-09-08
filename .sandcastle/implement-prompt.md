@@ -1,12 +1,12 @@
 # TASK
 
-Fix issue {{TASK_ID}}: {{ISSUE_TITLE}}
+Fix issue 7: Public artwork detail page
 
-Pull in the issue using `gh issue view <ID>`. If it has a parent PRD, pull that in too.
+Pull in the issue using `gh issue view 7`. If it has a parent PRD, pull that in too.
 
 Only work on the issue specified.
 
-Work on branch {{BRANCH}}. Make commits and run tests.
+Work on branch `feat/issue-7`. Make commits and run tests.
 
 # CONTEXT
 
@@ -41,11 +41,10 @@ Before committing, run `npm run typecheck` and `npm run test` to ensure the test
 
 Make a git commit. The commit message must:
 
-1. Start with `RALPH:` prefix
-2. Include task completed + PRD reference
-3. Key decisions made
-4. Files changed
-5. Blockers or notes for next iteration
+1. Include task completed + PRD reference
+2. Key decisions made
+3. Files changed
+4. Blockers or notes for next iteration
 
 Keep it concise.
 

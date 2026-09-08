@@ -14,6 +14,7 @@ const DISALLOWED_PATHS = [
   '/login',
   '/logout',
   '/resources',
+  '/design-system',
 ] as const
 
 const ROBOTS_NOINDEX = 'noindex, nofollow'
