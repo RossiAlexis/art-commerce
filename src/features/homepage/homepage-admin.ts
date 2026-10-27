@@ -35,6 +35,13 @@ export const homepageContentSchema = z.object({
 
 export type HomepageContentInput = z.infer<typeof homepageContentSchema>
 
+/** Homepage images are slotted by role. Existing rows stay the intro image. */
+export const HOMEPAGE_IMAGE_ROLES = ['hero', 'intro'] as const
+
+export const homepageImageRoleSchema = z.enum(HOMEPAGE_IMAGE_ROLES)
+
+export type HomepageImageRole = z.infer<typeof homepageImageRoleSchema>
+
 export type StoredHomepageImage = {
   id: string
   altText: string | null
@@ -44,7 +51,10 @@ export type AdminHomepageRecord = {
   id: string
   title: string
   text: string
+  /** Intro image beside the title and text. */
   image: StoredHomepageImage | null
+  /** Full-width banner. Absent when the homepage has no hero. */
+  hero: StoredHomepageImage | null
 }
 
 export type NewHomepageImage = {
@@ -56,7 +66,7 @@ export type NewHomepageImage = {
 /**
  * Persistence contract for singleton Homepage maintenance. There is
  * deliberately no "create" or "delete" of Homepage records: Administration only
- * ever reads and mutates the single existing record and its optional image.
+ * ever reads and mutates the single existing record and its optional images.
  */
 export type HomepageAdminRepository = {
   getSingleton: () => Promise<AdminHomepageRecord | null>
@@ -67,13 +77,18 @@ export type HomepageAdminRepository = {
   }) => Promise<AdminHomepageRecord>
   putImage: (input: {
     homepageId: string
+    role: HomepageImageRole
     image: NewHomepageImage
   }) => Promise<AdminHomepageRecord>
   updateImageAltText: (input: {
     homepageId: string
+    role: HomepageImageRole
     altText: string | null
   }) => Promise<AdminHomepageRecord>
-  removeImage: (input: { homepageId: string }) => Promise<AdminHomepageRecord>
+  removeImage: (input: {
+    homepageId: string
+    role: HomepageImageRole
+  }) => Promise<AdminHomepageRecord>
 }
 
 export type ImageValidationResult = { ok: true } | { ok: false; error: string }
@@ -141,10 +156,10 @@ export async function saveHomepageContent(
   return { ok: true, homepage }
 }
 
-/** Add or replace the optional Homepage image after validating the payload. */
+/** Add or replace one Homepage image slot after validating the payload. */
 export async function saveHomepageImage(
   repository: HomepageAdminRepository,
-  input: { image: NewHomepageImage },
+  input: { role: HomepageImageRole; image: NewHomepageImage },
 ): Promise<HomepageMutationResult> {
   const validation = validateHomepageImage({
     contentType: input.image.contentType,
@@ -161,47 +176,68 @@ export async function saveHomepageImage(
 
   const homepage = await repository.putImage({
     homepageId: current.id,
+    role: input.role,
     image: input.image,
   })
 
   return { ok: true, homepage }
 }
 
-/** Update the alt text of the existing Homepage image. */
+/** Update the alt text of one existing Homepage image slot. */
 export async function describeHomepageImage(
   repository: HomepageAdminRepository,
-  input: { altText: string | null },
+  input: { role: HomepageImageRole; altText: string | null },
 ): Promise<HomepageMutationResult> {
   const current = await repository.getSingleton()
   if (!current) {
     return { ok: false, error: MISSING_HOMEPAGE_ERROR }
   }
-  if (!current.image) {
+  if (!imageForRole(current, input.role)) {
     return { ok: false, error: 'There is no image to describe.' }
   }
 
   const homepage = await repository.updateImageAltText({
     homepageId: current.id,
+    role: input.role,
     altText: normalizeAltText(input.altText),
   })
 
   return { ok: true, homepage }
 }
 
-/** Remove the optional Homepage image; removing an absent image is a no-op. */
+/**
+ * Remove one Homepage image slot. Removing an empty slot is a no-op and does
+ * not affect the other slot.
+ */
 export async function removeHomepageImage(
   repository: HomepageAdminRepository,
+  input: { role: HomepageImageRole },
 ): Promise<HomepageMutationResult> {
   const current = await repository.getSingleton()
   if (!current) {
     return { ok: false, error: MISSING_HOMEPAGE_ERROR }
   }
-  if (!current.image) {
+  if (!imageForRole(current, input.role)) {
     return { ok: true, homepage: current }
   }
 
-  const homepage = await repository.removeImage({ homepageId: current.id })
+  const homepage = await repository.removeImage({
+    homepageId: current.id,
+    role: input.role,
+  })
   return { ok: true, homepage }
+}
+
+function imageForRole(
+  record: AdminHomepageRecord,
+  role: HomepageImageRole,
+): StoredHomepageImage | null {
+  switch (role) {
+    case 'hero':
+      return record.hero
+    case 'intro':
+      return record.image
+  }
 }
 
 /** Optional alt text: whitespace-only descriptions collapse to `null`. */

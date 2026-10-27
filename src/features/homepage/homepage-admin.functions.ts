@@ -5,6 +5,7 @@ import { getPrisma } from '#/server/db'
 
 import {
   homepageContentSchema,
+  homepageImageRoleSchema,
   loadAdminHomepage,
   removeHomepageImage,
   saveHomepageContent,
@@ -15,6 +16,8 @@ import {
 import type {
   AdminHomepageRecord,
   HomepageAdminRepository,
+  HomepageImageRole,
+  StoredHomepageImage,
 } from './homepage-admin'
 
 // The Administration guard lives in the server-only auth.session module (it
@@ -33,8 +36,7 @@ const homepageImageSelect = {
   title: true,
   text: true,
   image: {
-    select: { id: true, altText: true },
-    take: 1,
+    select: { id: true, altText: true, role: true },
   },
 } as const
 
@@ -42,14 +44,24 @@ function toRecord(homepage: {
   id: string
   title: string
   text: string
-  image: Array<{ id: string; altText: string | null }>
+  image: Array<{ id: string; altText: string | null; role: string }>
 }): AdminHomepageRecord {
   return {
     id: homepage.id,
     title: homepage.title,
     text: homepage.text,
-    image: homepage.image[0] ?? null,
+    image: pickStoredImage(homepage.image, 'intro'),
+    hero: pickStoredImage(homepage.image, 'hero'),
   }
+}
+
+function pickStoredImage(
+  images: Array<{ id: string; altText: string | null; role: string }>,
+  role: HomepageImageRole,
+): StoredHomepageImage | null {
+  const match = images.find((image) => image.role === role)
+  if (!match) return null
+  return { id: match.id, altText: match.altText }
 }
 
 const prismaHomepageAdminRepository: HomepageAdminRepository = {
@@ -69,10 +81,10 @@ const prismaHomepageAdminRepository: HomepageAdminRepository = {
     return toRecord(homepage)
   },
 
-  async putImage({ homepageId, image }) {
+  async putImage({ homepageId, role, image }) {
     const blob = Buffer.from(image.bytes)
     await getPrisma().homepageImage.upsert({
-      where: { homepageId },
+      where: { homepageId_role: { homepageId, role } },
       update: {
         contentType: image.contentType,
         altText: image.altText,
@@ -80,6 +92,7 @@ const prismaHomepageAdminRepository: HomepageAdminRepository = {
       },
       create: {
         homepageId,
+        role,
         contentType: image.contentType,
         altText: image.altText,
         blob,
@@ -88,16 +101,18 @@ const prismaHomepageAdminRepository: HomepageAdminRepository = {
     return reloadSingleton(homepageId)
   },
 
-  async updateImageAltText({ homepageId, altText }) {
+  async updateImageAltText({ homepageId, role, altText }) {
     await getPrisma().homepageImage.update({
-      where: { homepageId },
+      where: { homepageId_role: { homepageId, role } },
       data: { altText },
     })
     return reloadSingleton(homepageId)
   },
 
-  async removeImage({ homepageId }) {
-    await getPrisma().homepageImage.deleteMany({ where: { homepageId } })
+  async removeImage({ homepageId, role }) {
+    await getPrisma().homepageImage.deleteMany({
+      where: { homepageId, role },
+    })
     return reloadSingleton(homepageId)
   },
 }
@@ -139,7 +154,7 @@ export const saveHomepageContentFn = createServerFn({ method: 'POST' })
     })
   })
 
-/** Guarded add/replace of the optional Homepage image via multipart upload. */
+/** Guarded add/replace of one Homepage image slot via multipart upload. */
 export const saveHomepageImageFn = createServerFn({ method: 'POST' })
   .validator((data: unknown) => {
     if (!(data instanceof FormData)) {
@@ -158,12 +173,21 @@ export const saveHomepageImageFn = createServerFn({ method: 'POST' })
       return { ok: false as const, error: 'Choose an image file to upload.' }
     }
 
+    const parsedRole = homepageImageRoleSchema.safeParse(data.get('role'))
+    if (!parsedRole.success) {
+      return {
+        ok: false as const,
+        error: 'Image role must be hero or intro.',
+      }
+    }
+
     const rawAltText = data.get('altText')
     const altText = normalizeAltText(
       typeof rawAltText === 'string' ? rawAltText : null,
     )
 
     return saveHomepageImage(prismaHomepageAdminRepository, {
+      role: parsedRole.data,
       image: {
         contentType: file.type,
         altText,
@@ -172,22 +196,32 @@ export const saveHomepageImageFn = createServerFn({ method: 'POST' })
     })
   })
 
-const describeInput = guardInput.extend({ altText: z.string() })
+const describeInput = guardInput.extend({
+  altText: z.string(),
+  role: homepageImageRoleSchema,
+})
 
-/** Guarded update of the existing Homepage image alt text. */
+/** Guarded update of one Homepage image slot's alt text. */
 export const describeHomepageImageFn = createServerFn({ method: 'POST' })
   .validator(describeInput)
   .handler(async ({ data }) => {
     await guard(data)
     return describeHomepageImage(prismaHomepageAdminRepository, {
+      role: data.role,
       altText: data.altText,
     })
   })
 
-/** Guarded removal of the optional Homepage image. */
+const removeInput = guardInput.extend({
+  role: homepageImageRoleSchema,
+})
+
+/** Guarded removal of one Homepage image slot. */
 export const removeHomepageImageFn = createServerFn({ method: 'POST' })
-  .validator(guardInput)
+  .validator(removeInput)
   .handler(async ({ data }) => {
     await guard(data)
-    return removeHomepageImage(prismaHomepageAdminRepository)
+    return removeHomepageImage(prismaHomepageAdminRepository, {
+      role: data.role,
+    })
   })

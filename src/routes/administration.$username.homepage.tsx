@@ -80,33 +80,34 @@ function HomepageAdmin() {
           'Homepage title and text updated.',
         )
       }
-      onUploadImage={({ file, altText }) => {
+      onUploadImage={({ role, file, altText }) => {
         const form = new FormData()
         form.set('image', file)
         form.set('altText', altText)
+        form.set('role', role)
         form.set('returnTo', returnTo)
         form.set('requestedUsername', username)
         return run(
           () => saveHomepageImageFn({ data: form }),
-          'Homepage image saved.',
+          role === 'hero' ? 'Hero image saved.' : 'Intro image saved.',
         )
       }}
-      onDescribeImage={(altText) =>
+      onDescribeImage={({ role, altText }) =>
         run(
           () =>
             describeHomepageImageFn({
-              data: { altText, returnTo, requestedUsername: username },
+              data: { altText, role, returnTo, requestedUsername: username },
             }),
           'Image description updated.',
         )
       }
-      onRemoveImage={() =>
+      onRemoveImage={(role) =>
         run(
           () =>
             removeHomepageImageFn({
-              data: { returnTo, requestedUsername: username },
+              data: { role, returnTo, requestedUsername: username },
             }),
-          'Homepage image removed.',
+          role === 'hero' ? 'Hero image removed.' : 'Intro image removed.',
         )
       }
     />

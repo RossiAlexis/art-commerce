@@ -15,8 +15,8 @@ const prismaHomepageRepository: HomepageRepository = {
           select: {
             id: true,
             altText: true,
+            role: true,
           },
-          take: 1,
         },
       },
     })
@@ -26,7 +26,8 @@ const prismaHomepageRepository: HomepageRepository = {
     return {
       title: homepage.title,
       text: homepage.text,
-      image: homepage.image[0] ?? null,
+      image: pickHomepageImage(homepage.image, 'intro'),
+      hero: pickHomepageImage(homepage.image, 'hero'),
     }
   },
 
@@ -57,3 +58,12 @@ const prismaHomepageRepository: HomepageRepository = {
 export const getHomepage = createServerFn({ method: 'GET' }).handler(() =>
   loadHomepage(prismaHomepageRepository),
 )
+
+function pickHomepageImage(
+  images: Array<{ id: string; altText: string | null; role: string }>,
+  role: 'hero' | 'intro',
+) {
+  const match = images.find((image) => image.role === role)
+  if (!match) return null
+  return { id: match.id, altText: match.altText }
+}

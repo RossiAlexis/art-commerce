@@ -6,7 +6,10 @@ export type HomepageImage = {
 export type HomepageContent = {
   title: string
   text: string
+  /** Intro image beside the title and text. */
   image: HomepageImage | null
+  /** Full-width banner. Null when the homepage has no hero image. */
+  hero: HomepageImage | null
 }
 
 export type PaintingPreview = {

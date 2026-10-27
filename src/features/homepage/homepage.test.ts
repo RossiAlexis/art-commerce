@@ -9,6 +9,7 @@ describe('loadHomepage', () => {
         title: '¡Hola!',
         text: 'Welcome to my portfolio.',
         image: null,
+        hero: null,
       }),
       listPaintings: async () => [
         painting('fifth', '2024-01-05', ['image-5']),
@@ -24,6 +25,7 @@ describe('loadHomepage', () => {
       title: '¡Hola!',
       text: 'Welcome to my portfolio.',
       image: null,
+      hero: null,
     })
     expect(result.paintings.map(({ id }) => id)).toEqual([
       'first',
@@ -43,6 +45,21 @@ describe('loadHomepage', () => {
     })
 
     expect(result.paintings.map(({ id }) => id)).toEqual(['alpha', 'zebra'])
+  })
+
+  it('keeps a stored hero alongside a text-only intro', async () => {
+    const homepage = {
+      title: '¡Hola!',
+      text: 'Welcome to my portfolio.',
+      image: null,
+      hero: { id: 'hero-1', altText: 'Banner' },
+    }
+    const result = await loadHomepage({
+      getHomepage: async () => homepage,
+      listPaintings: async () => [],
+    })
+
+    expect(result.homepage).toEqual(homepage)
   })
 })
 
