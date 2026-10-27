@@ -50,33 +50,36 @@ test('adds, replaces, and removes the optional Homepage image', async ({
   await page.goto(`/administration/${username}/homepage`)
 
   const png = Buffer.from(onePixelPng, 'base64')
+  const intro = page.getByRole('region', { name: 'Intro image' })
 
   // Add
-  await page.getByLabel(/Add image|Replace image/).setInputFiles({
+  await intro.getByLabel(/Add image|Replace image/).setInputFiles({
     name: 'home.png',
     mimeType: 'image/png',
     buffer: png,
   })
-  await page.getByLabel('Alt text (optional)').fill('Vero in her studio')
-  await page.getByRole('button', { name: /Upload image|Replace image/ }).click()
+  await intro.getByLabel('Alt text (optional)').fill('Vero in her studio')
+  await intro
+    .getByRole('button', { name: /Upload image|Replace image/ })
+    .click()
   await expect(page.getByRole('status')).toContainText('saved')
   await expect(
-    page.locator('img[src^="/resources/homepage-image/"]'),
+    intro.locator('img[src^="/resources/homepage-image/"]'),
   ).toBeVisible()
 
   // Replace
-  await page.getByLabel('Replace image').setInputFiles({
+  await intro.getByLabel('Replace image').setInputFiles({
     name: 'home-2.png',
     mimeType: 'image/png',
     buffer: png,
   })
-  await page.getByRole('button', { name: 'Replace image' }).click()
+  await intro.getByRole('button', { name: 'Replace image' }).click()
   await expect(page.getByRole('status')).toContainText('saved')
 
   // Remove
-  await page.getByRole('button', { name: 'Remove image' }).click()
+  await intro.getByRole('button', { name: 'Remove image' }).click()
   await expect(page.getByRole('status')).toContainText('removed')
   await expect(
-    page.locator('img[src^="/resources/homepage-image/"]'),
+    intro.locator('img[src^="/resources/homepage-image/"]'),
   ).toHaveCount(0)
 })

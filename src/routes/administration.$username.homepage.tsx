@@ -41,7 +41,7 @@ function HomepageAdmin() {
   async function run(
     action: () => Promise<{ ok: boolean; error?: string } | null>,
     successMessage: string,
-  ) {
+  ): Promise<{ ok: boolean; error?: string } | null> {
     setPending(true)
     setStatus({ kind: 'idle' })
     try {
@@ -51,15 +51,17 @@ function HomepageAdmin() {
           kind: 'error',
           message: result.error ?? 'The change could not be saved.',
         })
-        return
+        return result
       }
       await router.invalidate()
       setStatus({ kind: 'success', message: successMessage })
+      return result
     } catch {
       setStatus({
         kind: 'error',
         message: 'The change could not be saved. Please try again.',
       })
+      return { ok: false }
     } finally {
       setPending(false)
     }
@@ -80,33 +82,34 @@ function HomepageAdmin() {
           'Homepage title and text updated.',
         )
       }
-      onUploadImage={({ file, altText }) => {
+      onUploadImage={({ role, file, altText }) => {
         const form = new FormData()
         form.set('image', file)
         form.set('altText', altText)
+        form.set('role', role)
         form.set('returnTo', returnTo)
         form.set('requestedUsername', username)
         return run(
           () => saveHomepageImageFn({ data: form }),
-          'Homepage image saved.',
+          role === 'hero' ? 'Hero image saved.' : 'Intro image saved.',
         )
       }}
-      onDescribeImage={(altText) =>
+      onDescribeImage={({ role, altText }) =>
         run(
           () =>
             describeHomepageImageFn({
-              data: { altText, returnTo, requestedUsername: username },
+              data: { altText, role, returnTo, requestedUsername: username },
             }),
           'Image description updated.',
         )
       }
-      onRemoveImage={() =>
+      onRemoveImage={(role) =>
         run(
           () =>
             removeHomepageImageFn({
-              data: { returnTo, requestedUsername: username },
+              data: { role, returnTo, requestedUsername: username },
             }),
-          'Homepage image removed.',
+          role === 'hero' ? 'Hero image removed.' : 'Intro image removed.',
         )
       }
     />

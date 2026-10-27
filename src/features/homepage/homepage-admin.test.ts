@@ -4,6 +4,7 @@ import {
   MAX_HOMEPAGE_IMAGE_BYTES,
   describeHomepageImage,
   homepageContentSchema,
+  homepageImageRoleSchema,
   loadAdminHomepage,
   removeHomepageImage,
   saveHomepageContent,
@@ -13,6 +14,7 @@ import {
 import type {
   AdminHomepageRecord,
   HomepageAdminRepository,
+  HomepageImageRole,
   NewHomepageImage,
 } from './homepage-admin'
 
@@ -35,37 +37,45 @@ function createFakeRepository(
       state.record = { ...state.record, title, text }
       return { ...state.record }
     },
-    async putImage({ homepageId, image }) {
+    async putImage({ homepageId, role, image }) {
       if (!state.record || state.record.id !== homepageId) {
         throw new Error('unexpected homepageId')
       }
       state.record = {
         ...state.record,
-        image: { id: 'image-generated', altText: image.altText },
+        [slotKey(role)]: { id: 'image-generated', altText: image.altText },
       }
       return { ...state.record }
     },
-    async updateImageAltText({ homepageId, altText }) {
-      if (
-        !state.record ||
-        state.record.id !== homepageId ||
-        !state.record.image
-      ) {
+    async updateImageAltText({ homepageId, role, altText }) {
+      if (!state.record || state.record.id !== homepageId) {
         throw new Error('no image to describe')
       }
+      const key = slotKey(role)
+      const current = state.record[key]
+      if (!current) throw new Error('no image to describe')
       state.record = {
         ...state.record,
-        image: { ...state.record.image, altText },
+        [key]: { ...current, altText },
       }
       return { ...state.record }
     },
-    async removeImage({ homepageId }) {
+    async removeImage({ homepageId, role }) {
       if (!state.record || state.record.id !== homepageId) {
         throw new Error('unexpected homepageId')
       }
-      state.record = { ...state.record, image: null }
+      state.record = { ...state.record, [slotKey(role)]: null }
       return { ...state.record }
     },
+  }
+}
+
+function slotKey(role: HomepageImageRole): 'hero' | 'image' {
+  switch (role) {
+    case 'hero':
+      return 'hero'
+    case 'intro':
+      return 'image'
   }
 }
 
@@ -74,6 +84,7 @@ const singleton: AdminHomepageRecord = {
   title: '¡Hola!',
   text: 'Welcome to my art portfolio.',
   image: null,
+  hero: null,
 }
 
 function newImage(overrides: Partial<NewHomepageImage> = {}): NewHomepageImage {
@@ -175,40 +186,91 @@ describe('saveHomepageContent', () => {
   })
 })
 
+describe('homepageImageRoleSchema', () => {
+  it('accepts only the hero and intro slots', () => {
+    expect(homepageImageRoleSchema.safeParse('hero').success).toBe(true)
+    expect(homepageImageRoleSchema.safeParse('intro').success).toBe(true)
+    expect(homepageImageRoleSchema.safeParse('banner').success).toBe(false)
+  })
+})
+
+const bothImages: AdminHomepageRecord = {
+  ...singleton,
+  image: { id: 'intro', altText: 'intro alt' },
+  hero: { id: 'hero', altText: 'hero alt' },
+}
+
 describe('homepage image lifecycle', () => {
-  it('adds an image when none exists', async () => {
+  it('adds an intro image when none exists', async () => {
     const repository = createFakeRepository(singleton)
-    const result = await saveHomepageImage(repository, { image: newImage() })
+    const result = await saveHomepageImage(repository, {
+      role: 'intro',
+      image: newImage(),
+    })
 
     expect(result.ok).toBe(true)
     expect(repository.record?.image).toEqual({
       id: 'image-generated',
       altText: 'A studio portrait',
     })
+    expect(repository.record?.hero).toBeNull()
   })
 
-  it('replaces an existing image', async () => {
+  it('replaces an existing intro image without clearing the hero', async () => {
     const repository = createFakeRepository({
-      ...singleton,
+      ...bothImages,
       image: { id: 'old-image', altText: 'old' },
     })
     const result = await saveHomepageImage(repository, {
+      role: 'intro',
       image: newImage({ altText: 'replacement' }),
     })
 
     expect(result.ok).toBe(true)
     expect(repository.record?.image?.id).toBe('image-generated')
     expect(repository.record?.image?.altText).toBe('replacement')
+    expect(repository.record?.hero).toEqual(bothImages.hero)
   })
 
-  it('rejects an invalid image without writing', async () => {
-    const repository = createFakeRepository(singleton)
+  it('saves a hero image without replacing the intro image', async () => {
+    const repository = createFakeRepository(bothImages)
     const result = await saveHomepageImage(repository, {
+      role: 'hero',
+      image: newImage({ altText: 'banner' }),
+    })
+
+    expect(result.ok).toBe(true)
+    expect(repository.record?.hero).toEqual({
+      id: 'image-generated',
+      altText: 'banner',
+    })
+    expect(repository.record?.image).toEqual(bothImages.image)
+  })
+
+  it('rejects an invalid image without writing either role', async () => {
+    const repository = createFakeRepository(bothImages)
+    const result = await saveHomepageImage(repository, {
+      role: 'hero',
       image: newImage({ contentType: 'application/pdf' }),
     })
 
     expect(result.ok).toBe(false)
-    expect(repository.record?.image).toBeNull()
+    expect(repository.record?.image).toEqual(bothImages.image)
+    expect(repository.record?.hero).toEqual(bothImages.hero)
+  })
+
+  it('rejects an oversize image without writing either role', async () => {
+    const repository = createFakeRepository(bothImages)
+    const result = await saveHomepageImage(repository, {
+      role: 'intro',
+      image: newImage({
+        bytes: new Uint8Array(MAX_HOMEPAGE_IMAGE_BYTES + 1),
+      }),
+    })
+
+    expect(result.ok).toBe(false)
+    expect(repository.record?.image).toEqual(bothImages.image)
+    expect(repository.record?.hero).toEqual(bothImages.hero)
   })
 
   it('describes an existing image with new alt text', async () => {
@@ -217,6 +279,7 @@ describe('homepage image lifecycle', () => {
       image: { id: 'img', altText: null },
     })
     const result = await describeHomepageImage(repository, {
+      role: 'intro',
       altText: 'Updated description',
     })
 
@@ -224,10 +287,40 @@ describe('homepage image lifecycle', () => {
     expect(repository.record?.image?.altText).toBe('Updated description')
   })
 
+  it('describes the hero without changing the intro alt text', async () => {
+    const repository = createFakeRepository(bothImages)
+    const result = await describeHomepageImage(repository, {
+      role: 'hero',
+      altText: 'Updated banner',
+    })
+
+    expect(result.ok).toBe(true)
+    expect(repository.record?.hero?.altText).toBe('Updated banner')
+    expect(repository.record?.image).toEqual(bothImages.image)
+  })
+
   it('cannot describe a missing image', async () => {
     const repository = createFakeRepository(singleton)
-    const result = await describeHomepageImage(repository, { altText: 'x' })
+    const result = await describeHomepageImage(repository, {
+      role: 'intro',
+      altText: 'x',
+    })
     expect(result.ok).toBe(false)
+  })
+
+  it('cannot describe an empty slot when the other role has an image', async () => {
+    const repository = createFakeRepository({
+      ...singleton,
+      image: { id: 'intro', altText: 'intro alt' },
+    })
+    const result = await describeHomepageImage(repository, {
+      role: 'hero',
+      altText: 'banner',
+    })
+
+    expect(result.ok).toBe(false)
+    expect(repository.record?.image?.altText).toBe('intro alt')
+    expect(repository.record?.hero).toBeNull()
   })
 
   it('removes an existing image', async () => {
@@ -235,16 +328,29 @@ describe('homepage image lifecycle', () => {
       ...singleton,
       image: { id: 'img', altText: 'alt' },
     })
-    const result = await removeHomepageImage(repository)
+    const result = await removeHomepageImage(repository, { role: 'intro' })
 
     expect(result.ok).toBe(true)
     expect(repository.record?.image).toBeNull()
   })
 
-  it('treats removing an absent image as a no-op success', async () => {
-    const repository = createFakeRepository(singleton)
-    const result = await removeHomepageImage(repository)
+  it('removes the hero without deleting the intro image', async () => {
+    const repository = createFakeRepository(bothImages)
+    const result = await removeHomepageImage(repository, { role: 'hero' })
+
     expect(result.ok).toBe(true)
-    expect(repository.record?.image).toBeNull()
+    expect(repository.record?.hero).toBeNull()
+    expect(repository.record?.image).toEqual(bothImages.image)
+  })
+
+  it('treats removing an absent image as a no-op success', async () => {
+    const repository = createFakeRepository({
+      ...bothImages,
+      hero: null,
+    })
+    const result = await removeHomepageImage(repository, { role: 'hero' })
+    expect(result.ok).toBe(true)
+    expect(repository.record?.hero).toBeNull()
+    expect(repository.record?.image).toEqual(bothImages.image)
   })
 })

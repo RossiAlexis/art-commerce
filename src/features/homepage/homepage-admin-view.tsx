@@ -1,12 +1,30 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { homepageContentSchema } from './homepage-admin'
-import type { AdminHomepageRecord } from './homepage-admin'
+import type {
+  AdminHomepageRecord,
+  HomepageImageRole,
+  StoredHomepageImage,
+} from './homepage-admin'
 
 export type HomepageAdminStatus =
   | { kind: 'idle' }
   | { kind: 'success'; message: string }
   | { kind: 'error'; message: string }
+
+type UploadImageInput = {
+  role: HomepageImageRole
+  file: File
+  altText: string
+}
+
+type DescribeImageInput = {
+  role: HomepageImageRole
+  altText: string
+}
+
+/** What a slot mutation reports. `void` counts as success so callers can ignore it. */
+type HomepageSlotMutation = { ok: boolean; error?: string } | null | void
 
 type HomepageAdminViewProps = {
   username: string
@@ -14,9 +32,13 @@ type HomepageAdminViewProps = {
   status: HomepageAdminStatus
   pending: boolean
   onSaveContent: (input: { title: string; text: string }) => void
-  onUploadImage: (input: { file: File; altText: string }) => void
-  onDescribeImage: (altText: string) => void
-  onRemoveImage: () => void
+  onUploadImage: (
+    input: UploadImageInput,
+  ) => HomepageSlotMutation | Promise<HomepageSlotMutation>
+  onDescribeImage: (input: DescribeImageInput) => void
+  onRemoveImage: (
+    role: HomepageImageRole,
+  ) => HomepageSlotMutation | Promise<HomepageSlotMutation>
 }
 
 export function HomepageAdminView({
@@ -43,8 +65,6 @@ export function HomepageAdminView({
     )
   }
 
-  const image = homepage.image
-
   function handleContentSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const form = new FormData(event.currentTarget)
@@ -59,20 +79,6 @@ export function HomepageAdminView({
     }
     setContentError(null)
     onSaveContent(parsed.data)
-  }
-
-  function handleUploadSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const form = new FormData(event.currentTarget)
-    const file = form.get('image')
-    if (!(file instanceof File) || file.size === 0) return
-    onUploadImage({ file, altText: String(form.get('altText') ?? '') })
-  }
-
-  function handleDescribeSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const form = new FormData(event.currentTarget)
-    onDescribeImage(String(form.get('altText') ?? ''))
   }
 
   return (
@@ -153,83 +159,300 @@ export function HomepageAdminView({
         </form>
       </section>
 
-      <section aria-labelledby="image-heading" className="mt-12">
-        <h2 id="image-heading" className="font-serif text-xl text-stone-900">
-          Image (optional)
-        </h2>
-
-        {image ? (
-          <div className="mt-4 space-y-4">
-            <img
-              src={`/resources/homepage-image/${image.id}`}
-              alt={image.altText ?? homepage.title}
-              className="w-48 rounded-sm object-cover shadow-sm"
-            />
-            <form className="space-y-2" onSubmit={handleDescribeSubmit}>
-              <label
-                htmlFor="describe-altText"
-                className="block text-sm font-medium"
-              >
-                Alt text
-              </label>
-              <input
-                id="describe-altText"
-                name="altText"
-                defaultValue={image.altText ?? ''}
-                className="w-full rounded border border-stone-400 px-3 py-2"
-              />
-              <button
-                type="submit"
-                disabled={pending}
-                className="rounded border border-stone-400 px-3 py-1.5 text-sm disabled:opacity-60"
-              >
-                Save alt text
-              </button>
-            </form>
-            <button
-              type="button"
-              onClick={onRemoveImage}
-              disabled={pending}
-              className="rounded border border-red-500 px-3 py-1.5 text-sm text-red-700 disabled:opacity-60"
-            >
-              Remove image
-            </button>
-          </div>
-        ) : (
-          <p className="mt-4 text-sm text-stone-600">
-            No image is set. The Homepage renders text-only.
-          </p>
-        )}
-
-        <form className="mt-6 space-y-2" onSubmit={handleUploadSubmit}>
-          <label htmlFor="image" className="block text-sm font-medium">
-            {image ? 'Replace image' : 'Add image'}
-          </label>
-          <input
-            id="image"
-            name="image"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            required
-            className="block text-sm"
-          />
-          <label htmlFor="upload-altText" className="block text-sm font-medium">
-            Alt text (optional)
-          </label>
-          <input
-            id="upload-altText"
-            name="altText"
-            className="w-full rounded border border-stone-400 px-3 py-2"
-          />
-          <button
-            type="submit"
-            disabled={pending}
-            className="rounded bg-stone-900 px-4 py-2 text-sm text-white disabled:opacity-60"
-          >
-            {image ? 'Replace image' : 'Upload image'}
-          </button>
-        </form>
-      </section>
+      <HomepageImageSlot
+        role="hero"
+        heading="Hero"
+        description="Full-width banner at the top of the homepage."
+        emptyMessage="No hero image is set. The homepage shows no banner."
+        title={homepage.title}
+        image={homepage.hero}
+        pending={pending}
+        onUploadImage={onUploadImage}
+        onDescribeImage={onDescribeImage}
+        onRemoveImage={onRemoveImage}
+      />
+      <HomepageImageSlot
+        role="intro"
+        heading="Intro image"
+        description="Optional image beside the title and text."
+        emptyMessage="No intro image is set. The homepage renders text-only."
+        title={homepage.title}
+        image={homepage.image}
+        pending={pending}
+        onUploadImage={onUploadImage}
+        onDescribeImage={onDescribeImage}
+        onRemoveImage={onRemoveImage}
+      />
     </main>
   )
+}
+
+type HomepageImageSlotProps = {
+  role: HomepageImageRole
+  heading: string
+  description: string
+  emptyMessage: string
+  title: string
+  image: StoredHomepageImage | null
+  pending: boolean
+  onUploadImage: HomepageAdminViewProps['onUploadImage']
+  onDescribeImage: HomepageAdminViewProps['onDescribeImage']
+  onRemoveImage: HomepageAdminViewProps['onRemoveImage']
+}
+
+function HomepageImageSlot({
+  role,
+  heading,
+  description,
+  emptyMessage,
+  title,
+  image,
+  pending,
+  onUploadImage,
+  onDescribeImage,
+  onRemoveImage,
+}: HomepageImageSlotProps) {
+  const headingId = `${role}-heading`
+  const fileInputId = `${role}-image`
+  const uploadAltId = `${role}-upload-alt`
+  const describeAltId = `${role}-describe-alt`
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const chosenFileRef = useRef<File | null>(null)
+  const { previewUrl, showFile, clearPreview } = usePendingImagePreview()
+
+  async function handleUploadSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const form = event.currentTarget
+    const data = new FormData(form)
+    const file = fileToUpload(data.get('image'), chosenFileRef.current)
+    if (!file) return
+    // Snapshot the preview this submit is for. A newer choice must stay put.
+    const shownUrl = previewUrl
+    const saved = await mutationSucceeded(
+      onUploadImage({
+        role,
+        file,
+        altText: String(data.get('altText') ?? ''),
+      }),
+    )
+    if (!saved) return
+    if (clearPreview(shownUrl))
+      forgetChosenFile(chosenFileRef, fileInputRef.current)
+  }
+
+  function handleDescribeSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const form = new FormData(event.currentTarget)
+    onDescribeImage({ role, altText: String(form.get('altText') ?? '') })
+  }
+
+  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null
+    chosenFileRef.current = file && file.size > 0 ? file : null
+    showFile(chosenFileRef.current)
+  }
+
+  async function handleRemove() {
+    const removed = await mutationSucceeded(onRemoveImage(role))
+    if (!removed) return
+    clearPreview()
+    forgetChosenFile(chosenFileRef, fileInputRef.current)
+  }
+
+  const miniatureSrc =
+    previewUrl ?? (image ? `/resources/homepage-image/${image.id}` : null)
+  const miniatureAlt = image?.altText ?? (previewUrl ? 'Selected image' : title)
+
+  return (
+    <section aria-labelledby={headingId} className="mt-12">
+      <h2 id={headingId} className="font-serif text-xl text-stone-900">
+        {heading}
+      </h2>
+      <p className="mt-2 text-sm text-stone-600">{description}</p>
+
+      {miniatureSrc ? (
+        <DesktopPreview role={role} src={miniatureSrc} alt={miniatureAlt} />
+      ) : (
+        <p className="mt-4 text-sm text-stone-600">{emptyMessage}</p>
+      )}
+
+      {image ? (
+        <div className="mt-4 space-y-4">
+          <form className="space-y-2" onSubmit={handleDescribeSubmit}>
+            <label
+              htmlFor={describeAltId}
+              className="block text-sm font-medium"
+            >
+              Alt text
+            </label>
+            <input
+              id={describeAltId}
+              name="altText"
+              defaultValue={image.altText ?? ''}
+              className="w-full rounded border border-stone-400 px-3 py-2"
+            />
+            <button
+              type="submit"
+              disabled={pending}
+              className="rounded border border-stone-400 px-3 py-1.5 text-sm disabled:opacity-60"
+            >
+              Save alt text
+            </button>
+          </form>
+          <button
+            type="button"
+            onClick={() => {
+              void handleRemove()
+            }}
+            disabled={pending}
+            className="rounded border border-red-500 px-3 py-1.5 text-sm text-red-700 disabled:opacity-60"
+          >
+            Remove image
+          </button>
+        </div>
+      ) : null}
+
+      <form className="mt-6 space-y-2" onSubmit={handleUploadSubmit}>
+        <label htmlFor={fileInputId} className="block text-sm font-medium">
+          {image ? 'Replace image' : 'Add image'}
+        </label>
+        <input
+          ref={fileInputRef}
+          id={fileInputId}
+          name="image"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          required
+          className="block text-sm"
+          onChange={handleFileChange}
+        />
+        <label htmlFor={uploadAltId} className="block text-sm font-medium">
+          Alt text (optional)
+        </label>
+        <input
+          id={uploadAltId}
+          name="altText"
+          className="w-full rounded border border-stone-400 px-3 py-2"
+        />
+        <button
+          type="submit"
+          disabled={pending}
+          className="rounded bg-stone-900 px-4 py-2 text-sm text-white disabled:opacity-60"
+        >
+          {image ? 'Replace image' : 'Upload image'}
+        </button>
+      </form>
+    </section>
+  )
+}
+
+function DesktopPreview({
+  role,
+  src,
+  alt,
+}: {
+  role: HomepageImageRole
+  src: string
+  alt: string
+}) {
+  return (
+    <figure className="mt-4">
+      {role === 'hero' ? (
+        <div className="relative aspect-1440/580 w-full overflow-hidden">
+          <img
+            src={src}
+            alt={alt}
+            className="absolute inset-0 h-full w-full object-cover object-center"
+          />
+        </div>
+      ) : (
+        <img
+          src={src}
+          alt={alt}
+          className="w-64 rounded-sm object-cover shadow-sm"
+        />
+      )}
+      <figcaption className="mt-2 text-sm text-stone-600">
+        Desktop preview
+      </figcaption>
+    </figure>
+  )
+}
+
+/**
+ * Show a file in the desktop frame as soon as it is chosen. The object URL is
+ * revoked when the choice changes, when that slot's upload or remove succeeds,
+ * and when the editor unmounts.
+ */
+function usePendingImagePreview() {
+  const previewUrlRef = useRef<string | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    return () => {
+      revokePreview(previewUrlRef)
+    }
+  }, [])
+
+  function showFile(file: File | null) {
+    revokePreview(previewUrlRef)
+    if (!file || file.size === 0) {
+      setPreviewUrl(null)
+      return
+    }
+    const nextUrl = URL.createObjectURL(file)
+    previewUrlRef.current = nextUrl
+    setPreviewUrl(nextUrl)
+  }
+
+  /** Drop the preview. Pass the url from submit time to ignore a newer choice. */
+  function clearPreview(expectedUrl?: string | null) {
+    if (expectedUrl !== undefined && previewUrlRef.current !== expectedUrl) {
+      return false
+    }
+    revokePreview(previewUrlRef)
+    setPreviewUrl(null)
+    return true
+  }
+
+  return { previewUrl, showFile, clearPreview }
+}
+
+function revokePreview(previewUrlRef: React.RefObject<string | null>) {
+  if (!previewUrlRef.current) return
+  URL.revokeObjectURL(previewUrlRef.current)
+  previewUrlRef.current = null
+}
+
+function resetFileInput(input: HTMLInputElement | null) {
+  if (input) input.value = ''
+}
+
+/** Prefer the file in the form. Otherwise use the file shown in the preview. */
+function fileToUpload(
+  formValue: FormDataEntryValue | null,
+  chosen: File | null,
+) {
+  if (formValue instanceof File && formValue.size > 0) return formValue
+  return chosen && chosen.size > 0 ? chosen : null
+}
+
+function forgetChosenFile(
+  chosenFileRef: React.RefObject<File | null>,
+  input: HTMLInputElement | null,
+) {
+  chosenFileRef.current = null
+  resetFileInput(input)
+}
+
+/** True unless the mutation reported failure. A thrown request is a failure. */
+async function mutationSucceeded(
+  result: HomepageSlotMutation | Promise<HomepageSlotMutation>,
+) {
+  try {
+    const settled = await result
+    return !(settled && settled.ok === false)
+  } catch {
+    return false
+  }
 }
