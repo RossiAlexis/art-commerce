@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { renderToStaticMarkup } from 'react-dom/server'
-import { cleanup, fireEvent, render } from '@testing-library/react'
+import { act, cleanup, fireEvent, render } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { HomepageAdminView } from './homepage-admin-view'
@@ -146,6 +146,129 @@ describe('HomepageAdminView', () => {
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:preview-3')
   })
 
+  it('replaces the local preview with the stored image after that slot saves', async () => {
+    const { revokeObjectURL } = stubPreviewUrls()
+    const onUploadImage = vi.fn(() => Promise.resolve({ ok: true as const }))
+    const homepage = {
+      ...emptyHomepage,
+      title: 'Title',
+      text: 'Text',
+      hero: { id: 'hero-1', altText: 'Studio banner' },
+    }
+    render(
+      <HomepageAdminView
+        {...baseProps}
+        homepage={homepage}
+        onUploadImage={onUploadImage}
+      />,
+    )
+
+    const heroInput = chooseImage('hero-image', 'banner.png')
+    chooseImage('intro-image', 'portrait.png')
+    expect(document.querySelector('img[src="blob:preview-1"]')).not.toBeNull()
+    expect(document.querySelector('img[src="blob:preview-2"]')).not.toBeNull()
+
+    await act(async () => {
+      fireEvent.submit(heroInput.form!)
+    })
+
+    expect(onUploadImage).toHaveBeenCalledOnce()
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:preview-1')
+    expect(document.querySelector('img[src="blob:preview-1"]')).toBeNull()
+    expect(
+      document.querySelector('img[src="/resources/homepage-image/hero-1"]'),
+    ).not.toBeNull()
+    expect(heroInput.value).toBe('')
+    // The other slot's unsaved preview stays until that slot succeeds.
+    expect(document.querySelector('img[src="blob:preview-2"]')).not.toBeNull()
+    expect(revokeObjectURL).not.toHaveBeenCalledWith('blob:preview-2')
+
+    await act(async () => {
+      fireEvent.submit(heroInput.form!)
+    })
+    expect(onUploadImage).toHaveBeenCalledOnce()
+  })
+
+  it('clears the local preview after that slot is removed', async () => {
+    const { revokeObjectURL } = stubPreviewUrls()
+    const onRemoveImage = vi.fn(() => Promise.resolve({ ok: true as const }))
+    const homepage = {
+      ...emptyHomepage,
+      hero: { id: 'hero-1', altText: 'Studio banner' },
+    }
+    const view = render(
+      <HomepageAdminView
+        {...baseProps}
+        homepage={homepage}
+        onRemoveImage={onRemoveImage}
+      />,
+    )
+
+    const heroInput = chooseImage('hero-image', 'banner.png')
+    const hero = sectionNamed('Hero')
+    const remove = [...hero.querySelectorAll('button')].find(
+      (button) => button.textContent === 'Remove image',
+    )
+    expect(remove).toBeDefined()
+
+    await act(async () => {
+      fireEvent.click(remove!)
+    })
+
+    expect(onRemoveImage).toHaveBeenCalledWith('hero')
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:preview-1')
+    expect(document.querySelector('img[src="blob:preview-1"]')).toBeNull()
+    expect(heroInput.value).toBe('')
+
+    view.rerender(
+      <HomepageAdminView
+        {...baseProps}
+        homepage={emptyHomepage}
+        onRemoveImage={onRemoveImage}
+      />,
+    )
+    expect(view.container.textContent).toContain('No hero image is set')
+    expect(document.querySelector('img[src="blob:preview-1"]')).toBeNull()
+    expect(
+      document.querySelector('img[src="/resources/homepage-image/hero-1"]'),
+    ).toBeNull()
+  })
+
+  it('keeps the chosen file when that slot upload or remove fails', async () => {
+    const { revokeObjectURL } = stubPreviewUrls()
+    const onUploadImage = vi.fn(() => Promise.resolve({ ok: false as const }))
+    const onRemoveImage = vi.fn(() => Promise.resolve({ ok: false as const }))
+    render(
+      <HomepageAdminView
+        {...baseProps}
+        homepage={{
+          ...emptyHomepage,
+          hero: { id: 'hero-1', altText: 'Studio banner' },
+        }}
+        onUploadImage={onUploadImage}
+        onRemoveImage={onRemoveImage}
+      />,
+    )
+
+    const heroInput = chooseImage('hero-image', 'banner.png')
+    await act(async () => {
+      fireEvent.submit(heroInput.form!)
+    })
+    expect(onUploadImage).toHaveBeenCalledOnce()
+    expect(document.querySelector('img[src="blob:preview-1"]')).not.toBeNull()
+    expect(revokeObjectURL).not.toHaveBeenCalled()
+
+    const remove = [...sectionNamed('Hero').querySelectorAll('button')].find(
+      (button) => button.textContent === 'Remove image',
+    )
+    await act(async () => {
+      fireEvent.click(remove!)
+    })
+    expect(onRemoveImage).toHaveBeenCalledWith('hero')
+    expect(document.querySelector('img[src="blob:preview-1"]')).not.toBeNull()
+    expect(revokeObjectURL).not.toHaveBeenCalled()
+  })
+
   it('surfaces a success notification after a mutation', () => {
     const markup = renderToStaticMarkup(
       <HomepageAdminView
@@ -172,6 +295,36 @@ describe('HomepageAdminView', () => {
     expect(markup).toContain('role="alert"')
   })
 })
+
+function stubPreviewUrls() {
+  const revokeObjectURL = vi.fn()
+  let previewCount = 0
+  vi.stubGlobal('URL', {
+    createObjectURL: vi.fn(() => `blob:preview-${++previewCount}`),
+    revokeObjectURL,
+  })
+  return { revokeObjectURL }
+}
+
+function chooseImage(id: string, name: string) {
+  const input = document.getElementById(id)
+  expect(input).toBeInstanceOf(HTMLInputElement)
+  const element = input as HTMLInputElement
+  const file = new File([new Uint8Array([1, 2, 3])], name, {
+    type: 'image/png',
+  })
+  fireEvent.change(element, { target: { files: [file] } })
+  return element
+}
+
+function sectionNamed(name: string) {
+  const heading = [...document.querySelectorAll('h2')].find(
+    (node) => node.textContent === name,
+  )
+  const section = heading?.closest('section')
+  expect(section).toBeInstanceOf(HTMLElement)
+  return section as HTMLElement
+}
 
 function imgTag(markup: string, srcFragment: string) {
   const tag = (markup.match(/<img\b[^>]*>/g) ?? []).find((candidate) =>

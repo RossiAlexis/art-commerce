@@ -41,7 +41,7 @@ function HomepageAdmin() {
   async function run(
     action: () => Promise<{ ok: boolean; error?: string } | null>,
     successMessage: string,
-  ) {
+  ): Promise<{ ok: boolean; error?: string } | null> {
     setPending(true)
     setStatus({ kind: 'idle' })
     try {
@@ -51,15 +51,17 @@ function HomepageAdmin() {
           kind: 'error',
           message: result.error ?? 'The change could not be saved.',
         })
-        return
+        return result
       }
       await router.invalidate()
       setStatus({ kind: 'success', message: successMessage })
+      return result
     } catch {
       setStatus({
         kind: 'error',
         message: 'The change could not be saved. Please try again.',
       })
+      return { ok: false }
     } finally {
       setPending(false)
     }

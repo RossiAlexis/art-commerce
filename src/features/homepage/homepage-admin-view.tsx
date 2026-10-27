@@ -23,15 +23,22 @@ type DescribeImageInput = {
   altText: string
 }
 
+/** What a slot mutation reports. `void` counts as success so callers can ignore it. */
+type HomepageSlotMutation = { ok: boolean; error?: string } | null | void
+
 type HomepageAdminViewProps = {
   username: string
   homepage: AdminHomepageRecord | null
   status: HomepageAdminStatus
   pending: boolean
   onSaveContent: (input: { title: string; text: string }) => void
-  onUploadImage: (input: UploadImageInput) => void
+  onUploadImage: (
+    input: UploadImageInput,
+  ) => HomepageSlotMutation | Promise<HomepageSlotMutation>
   onDescribeImage: (input: DescribeImageInput) => void
-  onRemoveImage: (role: HomepageImageRole) => void
+  onRemoveImage: (
+    role: HomepageImageRole,
+  ) => HomepageSlotMutation | Promise<HomepageSlotMutation>
 }
 
 export function HomepageAdminView({
@@ -188,9 +195,9 @@ type HomepageImageSlotProps = {
   title: string
   image: StoredHomepageImage | null
   pending: boolean
-  onUploadImage: (input: UploadImageInput) => void
-  onDescribeImage: (input: DescribeImageInput) => void
-  onRemoveImage: (role: HomepageImageRole) => void
+  onUploadImage: HomepageAdminViewProps['onUploadImage']
+  onDescribeImage: HomepageAdminViewProps['onDescribeImage']
+  onRemoveImage: HomepageAdminViewProps['onRemoveImage']
 }
 
 function HomepageImageSlot({
@@ -209,18 +216,28 @@ function HomepageImageSlot({
   const fileInputId = `${role}-image`
   const uploadAltId = `${role}-upload-alt`
   const describeAltId = `${role}-describe-alt`
-  const { previewUrl, showFile } = usePendingImagePreview()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const chosenFileRef = useRef<File | null>(null)
+  const { previewUrl, showFile, clearPreview } = usePendingImagePreview()
 
-  function handleUploadSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleUploadSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const form = new FormData(event.currentTarget)
-    const file = form.get('image')
-    if (!(file instanceof File) || file.size === 0) return
-    onUploadImage({
-      role,
-      file,
-      altText: String(form.get('altText') ?? ''),
-    })
+    const form = event.currentTarget
+    const data = new FormData(form)
+    const file = fileToUpload(data.get('image'), chosenFileRef.current)
+    if (!file) return
+    // Snapshot the preview this submit is for. A newer choice must stay put.
+    const shownUrl = previewUrl
+    const saved = await mutationSucceeded(
+      onUploadImage({
+        role,
+        file,
+        altText: String(data.get('altText') ?? ''),
+      }),
+    )
+    if (!saved) return
+    if (clearPreview(shownUrl))
+      forgetChosenFile(chosenFileRef, fileInputRef.current)
   }
 
   function handleDescribeSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -230,7 +247,16 @@ function HomepageImageSlot({
   }
 
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
-    showFile(event.target.files?.[0] ?? null)
+    const file = event.target.files?.[0] ?? null
+    chosenFileRef.current = file && file.size > 0 ? file : null
+    showFile(chosenFileRef.current)
+  }
+
+  async function handleRemove() {
+    const removed = await mutationSucceeded(onRemoveImage(role))
+    if (!removed) return
+    clearPreview()
+    forgetChosenFile(chosenFileRef, fileInputRef.current)
   }
 
   const miniatureSrc =
@@ -275,7 +301,9 @@ function HomepageImageSlot({
           </form>
           <button
             type="button"
-            onClick={() => onRemoveImage(role)}
+            onClick={() => {
+              void handleRemove()
+            }}
             disabled={pending}
             className="rounded border border-red-500 px-3 py-1.5 text-sm text-red-700 disabled:opacity-60"
           >
@@ -289,6 +317,7 @@ function HomepageImageSlot({
           {image ? 'Replace image' : 'Add image'}
         </label>
         <input
+          ref={fileInputRef}
           id={fileInputId}
           name="image"
           type="file"
@@ -352,7 +381,8 @@ function DesktopPreview({
 
 /**
  * Show a file in the desktop frame as soon as it is chosen. The object URL is
- * revoked when the choice changes and when the editor unmounts.
+ * revoked when the choice changes, when that slot's upload or remove succeeds,
+ * and when the editor unmounts.
  */
 function usePendingImagePreview() {
   const previewUrlRef = useRef<string | null>(null)
@@ -360,18 +390,12 @@ function usePendingImagePreview() {
 
   useEffect(() => {
     return () => {
-      if (previewUrlRef.current) {
-        URL.revokeObjectURL(previewUrlRef.current)
-        previewUrlRef.current = null
-      }
+      revokePreview(previewUrlRef)
     }
   }, [])
 
   function showFile(file: File | null) {
-    if (previewUrlRef.current) {
-      URL.revokeObjectURL(previewUrlRef.current)
-      previewUrlRef.current = null
-    }
+    revokePreview(previewUrlRef)
     if (!file || file.size === 0) {
       setPreviewUrl(null)
       return
@@ -381,5 +405,54 @@ function usePendingImagePreview() {
     setPreviewUrl(nextUrl)
   }
 
-  return { previewUrl, showFile }
+  /** Drop the preview. Pass the url from submit time to ignore a newer choice. */
+  function clearPreview(expectedUrl?: string | null) {
+    if (expectedUrl !== undefined && previewUrlRef.current !== expectedUrl) {
+      return false
+    }
+    revokePreview(previewUrlRef)
+    setPreviewUrl(null)
+    return true
+  }
+
+  return { previewUrl, showFile, clearPreview }
+}
+
+function revokePreview(previewUrlRef: React.RefObject<string | null>) {
+  if (!previewUrlRef.current) return
+  URL.revokeObjectURL(previewUrlRef.current)
+  previewUrlRef.current = null
+}
+
+function resetFileInput(input: HTMLInputElement | null) {
+  if (input) input.value = ''
+}
+
+/** Prefer the file in the form. Otherwise use the file shown in the preview. */
+function fileToUpload(
+  formValue: FormDataEntryValue | null,
+  chosen: File | null,
+) {
+  if (formValue instanceof File && formValue.size > 0) return formValue
+  return chosen && chosen.size > 0 ? chosen : null
+}
+
+function forgetChosenFile(
+  chosenFileRef: React.RefObject<File | null>,
+  input: HTMLInputElement | null,
+) {
+  chosenFileRef.current = null
+  resetFileInput(input)
+}
+
+/** True unless the mutation reported failure. A thrown request is a failure. */
+async function mutationSucceeded(
+  result: HomepageSlotMutation | Promise<HomepageSlotMutation>,
+) {
+  try {
+    const settled = await result
+    return !(settled && settled.ok === false)
+  } catch {
+    return false
+  }
 }
